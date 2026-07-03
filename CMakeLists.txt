@@ -27,21 +27,21 @@ include_directories(
 add_library(cjson STATIC external/cjson/cJSON.c)
 
 # Create executable
-add_executable(my_binary ${SOURCES})
+add_executable(redmagicfancontrold ${SOURCES})
 
 # Link libraries
-target_link_libraries(my_binary PRIVATE cjson)
+target_link_libraries(redmagicfancontrold PRIVATE cjson)
 
 # Platform-specific settings
 if(ANDROID)
     # Android-specific configuration
     message(STATUS "Building for Android")
-    target_link_options(my_binary PRIVATE "-Wl,-z,max-page-size=16384")
+    target_link_options(redmagicfancontrold PRIVATE "-Wl,-z,max-page-size=16384")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     # Linux-specific configuration
     message(STATUS "Building for Linux")
     if(NOT ANDROID)
         # Additional Linux-specific flags if needed
-        target_compile_options(my_binary PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(redmagicfancontrold PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 endif()
