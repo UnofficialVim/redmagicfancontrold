@@ -1,1 +1,32 @@
-
+{
+    "version": 1,
+    "call_silence": {
+        "enabled": true
+    },
+    "active_profile": "default",
+    "profiles": [
+        {
+            "name": "default",
+            "fan_curve": {
+                "steps": [
+                    { "temp_c": 40, "fan_pct": 0 },
+                    { "temp_c": 50, "fan_pct": 30 },
+                    { "temp_c": 60, "fan_pct": 55 },
+                    { "temp_c": 70, "fan_pct": 80 },
+                    { "temp_c": 80, "fan_pct": 100 }
+                ]
+            }
+        },
+        {
+            "name": "gaming",
+            "fan_curve": {
+                "steps": [
+                    { "temp_c": 35, "fan_pct": 20 },
+                    { "temp_c": 45, "fan_pct": 45 },
+                    { "temp_c": 55, "fan_pct": 70 },
+                    { "temp_c": 65, "fan_pct": 100 }
+                ]
+            }
+        }
+    ]
+}

@@ -2,17 +2,23 @@
 #define LOGGING_H
 
 #include <stdarg.h>
+#include <stdio.h>
+typedef struct Runtime Runtime;
 
-typedef enum {
-    LOG_ERROR = 0,
-    LOG_WARN,
-    LOG_INFO,
-    LOG_DEBUG,
-} log_level_t;
+typedef struct Logger {
+    FILE *log_file;
+    enum {
+        LOG_ERROR = 0,
+        LOG_WARN,
+        LOG_INFO,
+        LOG_DEBUG
+    } current_level;
+} Logger;
 
-int log_init(const char *path);
-void log_set_level(log_level_t level);
-void log_write(log_level_t level, const char *fmt, ...);
-void log_close(void);
+int log_init(Runtime *rt, const char *path);
+void log_set_level(Logger *logger, int level);
+void log_write(Logger *logger, int level, const char *fmt, ...);
+void log_console(Logger *logger, int level, const char *fmt, ...);
+void log_close(Logger *logger);
 
 #endif

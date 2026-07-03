@@ -8,29 +8,35 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(SOURCES
     src/main.c
     src/config/config.c
+    src/engine/engine.c
+    src/external/cjson/cJSON.c
     src/fan/fan.c
     src/ipc/socket.c
     src/logging/logging.c
+    src/runtime/runtime.c
 )
 
 # Include directories
 include_directories(
     src
     src/config
+    src/engine
+    src/external/cjson
     src/fan
     src/ipc
     src/logging
-    external/cjson
+    src/runtime
+    
 )
-
-# Add external libraries
-add_library(cjson STATIC external/cjson/cJSON.c)
 
 # Create executable
 add_executable(redmagicfancontrold ${SOURCES})
 
 # Link libraries
-target_link_libraries(redmagicfancontrold PRIVATE cjson)
+# cJSON is included as source (`src/external/cjson/cJSON.c`) so
+# no external `-lcjson` link is necessary. Keep this section
+# available for future external libs.
+# target_link_libraries(redmagicfancontrold PRIVATE cjson)
 
 # Platform-specific settings
 if(ANDROID)

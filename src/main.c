@@ -1,12 +1,19 @@
 #include <stdio.h>
-#include "logging/logging.h"
+#include "runtime/runtime.h"
+
 
 int main(void) {
-	log_init("redmagicfancontrold.log");
-	log_write(LOG_INFO, "RedMagic Fan Control Daemon started");
+    Runtime rt = {0};
 
-	//start lifecycle of the daemon here
+	runtime_init(&rt);
 
-	// exit gracefully
-	return 0;
+    //engine_init(&rt);
+
+    //engine_run(&rt);
+
+    //engine_shutdown(&rt);
+
+    runtime_cleanup(&rt);
+
+    return 0;
 }
