@@ -1,0 +1,64 @@
+name: CMake Multi-Platform
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  BUILD_TYPE: Release
+  MUSL_TOOLCHAIN: aarch64-linux-musl-cross
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux64
+            cross: false
+          - name: arm64
+            cross: true
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install musl cross toolchain
+        if: matrix.cross
+        run: |
+          curl -LO https://musl.cc/${{ env.MUSL_TOOLCHAIN }}.tgz
+          sudo tar xzf ${{ env.MUSL_TOOLCHAIN }}.tgz -C /opt
+          echo "/opt/${{ env.MUSL_TOOLCHAIN }}/bin" >> "$GITHUB_PATH"
+
+      - name: Configure (native)
+        if: ${{ !matrix.cross }}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Configure (arm64 musl cross)
+        if: matrix.cross
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/aarch64-linux-musl.cmake
+
+      - name: Build
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Test (native only)
+        if: ${{ !matrix.cross }}
+        working-directory: build
+        run: ctest --output-on-failure
+
+      - name: Strip arm64 binaries
+        if: matrix.cross
+        run: find build -maxdepth 3 -type f -executable -exec aarch64-linux-musl-strip {} \; 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: redmagicfancontrold-${{ matrix.name }}
+          path: |
+            build/redmagicfancontrold
+          if-no-files-found: warn
