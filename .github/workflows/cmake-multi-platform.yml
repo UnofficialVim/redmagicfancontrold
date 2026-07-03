@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install musl cross toolchain
         if: matrix.cross
@@ -59,7 +59,7 @@ jobs:
         run: find build -maxdepth 3 -type f -executable -exec aarch64-unknown-linux-musl-strip {} \; 2>/dev/null || true
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: redmagicfancontrold-${{ matrix.name }}
           path: |
