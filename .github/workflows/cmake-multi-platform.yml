@@ -8,7 +8,9 @@ on:
 
 env:
   BUILD_TYPE: Release
-  MUSL_TOOLCHAIN: aarch64-linux-musl-cross
+  MUSL_TOOLCHAIN: aarch64-unknown-linux-musl
+  MUSL_TOOLCHAIN_VERSION: "20260515"
+  MUSL_TOOLCHAIN_SHA256: 90282c463498dcdab9b96a464a0925d53f30c884b2d7b25e3998999416ae34b8
 
 jobs:
   build:
@@ -29,8 +31,9 @@ jobs:
       - name: Install musl cross toolchain
         if: matrix.cross
         run: |
-          curl -LO https://musl.cc/${{ env.MUSL_TOOLCHAIN }}.tgz
-          sudo tar xzf ${{ env.MUSL_TOOLCHAIN }}.tgz -C /opt
+          curl -LO https://github.com/cross-tools/musl-cross/releases/download/${{ env.MUSL_TOOLCHAIN_VERSION }}/${{ env.MUSL_TOOLCHAIN }}.tar.xz
+          echo "${{ env.MUSL_TOOLCHAIN_SHA256 }}  ${{ env.MUSL_TOOLCHAIN }}.tar.xz" | sha256sum -c -
+          sudo tar xJf ${{ env.MUSL_TOOLCHAIN }}.tar.xz -C /opt
           echo "/opt/${{ env.MUSL_TOOLCHAIN }}/bin" >> "$GITHUB_PATH"
 
       - name: Configure (native)
@@ -41,7 +44,7 @@ jobs:
         if: matrix.cross
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/aarch64-linux-musl.cmake
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/cmake/toolchains/aarch64-unknown-linux-musl.cmake
 
       - name: Build
         run: cmake --build build -j"$(nproc)"
@@ -53,7 +56,7 @@ jobs:
 
       - name: Strip arm64 binaries
         if: matrix.cross
-        run: find build -maxdepth 3 -type f -executable -exec aarch64-linux-musl-strip {} \; 2>/dev/null || true
+        run: find build -maxdepth 3 -type f -executable -exec aarch64-unknown-linux-musl-strip {} \; 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
