@@ -1,2 +1,2 @@
 #include "config.h"
-#include "cJSON.h"
+#include "../../external/cjson/cJSON.h"

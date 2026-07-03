@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "logging.h"
+#include "logging/logging.h"
 
 int main(void) {
 	log_init("redmagicfancontrold.log");
