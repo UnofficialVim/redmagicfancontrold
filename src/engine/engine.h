@@ -1,10 +1,10 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "../runtime/runtime.h"
+struct Runtime;
 
-int engine_init(Runtime *rt);
-void engine_run(Runtime *rt);
-void engine_shutdown(Runtime *rt);
+int engine_init(struct Runtime *rt);
+void engine_run(struct Runtime *rt);
+void engine_shutdown(struct Runtime *rt);
 
 #endif

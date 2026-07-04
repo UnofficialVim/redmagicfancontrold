@@ -3,13 +3,12 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-typedef struct Runtime Runtime;
+
+struct Runtime;
 
 #define MAX_FAN_STEPS 16
 #define MAX_PROFILE_NAME 32
 #define MAX_PROFILES 8
-
-
 
 typedef struct {
     int temp_c;
@@ -27,18 +26,16 @@ typedef struct {
 } Profile;
 
 typedef struct Config {
-    //contains the config.json data
     int version;
     bool call_silence;
     char active_profile[MAX_PROFILE_NAME]; 
     size_t profile_count;
     Profile profiles[MAX_PROFILES];
-
     Profile *active;
-}Config;
+} Config;
 
-void config_init(Runtime *rt);
-void config_save(Runtime *rt);
-void config_load(Runtime *rt);
+void config_init(struct Runtime *rt);
+void config_save(struct Runtime *rt);
+void config_load(struct Runtime *rt);
 
-#endif 
+#endif

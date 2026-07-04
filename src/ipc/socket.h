@@ -1,8 +1,8 @@
 #ifndef SOCKET_H
 #define SOCKET_H
-
-typedef struct Runtime Runtime;
 #include <stdbool.h>
+
+struct Runtime;
 
 typedef struct Socket {
     bool enabled;
@@ -11,7 +11,7 @@ typedef struct Socket {
     int addrlen;
 } Socket;
 
-void socket_init(Runtime *rt);
-void socket_cleanup(Runtime *rt);
+void socket_init(struct Runtime *rt);
+void socket_cleanup(struct Runtime *rt);
 
 #endif // SOCKET_H

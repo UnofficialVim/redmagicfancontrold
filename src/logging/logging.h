@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-typedef struct Runtime Runtime;
+struct Runtime;
 
 typedef struct Logger {
     FILE *log_file;
@@ -15,10 +15,10 @@ typedef struct Logger {
     } current_level;
 } Logger;
 
-int log_init(Runtime *rt, const char *path);
-void log_set_level(Logger *logger, int level);
-void log_write(Logger *logger, int level, const char *fmt, ...);
-void log_console(Logger *logger, int level, const char *fmt, ...);
-void log_close(Logger *logger);
+int logger_init(struct Runtime *rt, const char *path);
+void logger_set_level(Logger *logger, int level);
+void logger_write(Logger *logger, int level, const char *fmt, ...);
+void logger_console(Logger *logger, int level, const char *fmt, ...);
+void logger_close(Logger *logger);
 
 #endif
