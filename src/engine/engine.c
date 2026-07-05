@@ -10,15 +10,13 @@
 
 int engine_init(Runtime *rt)
 {
-    //logger_init(&rt);
-    //config_init(&rt);
-    //fan_init(&rt);
-    //socket_init(&rt);
 
+    logger_write(rt, 2, "Initialized Engine");
     return 0;
 }
 
 void engine_run(Runtime *rt) {
+    logger_write(rt, 2, "Starting Event Loop...");
     while (rt->running) {
         //main loop of the engine
     }

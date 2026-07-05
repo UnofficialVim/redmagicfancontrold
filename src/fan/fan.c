@@ -6,6 +6,8 @@ int fan_init(Runtime *rt) {
 	rt->fan.current_speed = 0;
 	rt->fan.target_speed = 0;
 	rt->fan.device_path = NULL;
+
+	logger_write(rt, 2, "Initialized Fan Control");
 	return 0;
 }
 

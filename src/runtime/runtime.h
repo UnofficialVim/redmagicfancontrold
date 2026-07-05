@@ -12,6 +12,8 @@ typedef struct Runtime
 {
     bool running;
 
+    Logger logger;
+
     Config config;
 
     Fan fan;

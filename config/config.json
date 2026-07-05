@@ -1,10 +1,8 @@
 {
     "version": 1,
-    "call_silence": {
-        "enabled": true
-    },
-    "log_file": "",
-    "current_log_level": 2,
+    "calls_silence_fan": true,
+    "log_file": "../config/log",
+    "current_log_level": 3,
     "active_profile": "default",
     "profiles": [
         {

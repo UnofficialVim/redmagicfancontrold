@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct Config {
     int version;
-    bool call_silence;
+    bool calls_silence_fan;
     char active_profile[MAX_PROFILE_NAME]; 
     size_t profile_count;
     Profile profiles[MAX_PROFILES];

@@ -10,6 +10,7 @@ void socket_init(Runtime *rt) {
 	rt->socket.server_fd = -1;
 	rt->socket.client_fd = -1;
 	rt->socket.addrlen = 0;
+	logger_write(rt, 2, "Initialized Socket");
 }
 
 void socket_cleanup(Runtime *rt) {

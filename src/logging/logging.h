@@ -5,8 +5,11 @@
 #include <stdio.h>
 struct Runtime;
 
+typedef struct Logger {
+    FILE *file;
+} Logger;
 
-int logger_init(struct Runtime *rt, const char *path);
+int logger_init(struct Runtime *rt);
 void logger_set_level(struct Runtime *rt, int level);
 void logger_write(struct Runtime *rt, int level, const char *fmt, ...);
 void logger_console(struct Runtime *rt, int level, const char *fmt, ...);

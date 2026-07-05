@@ -5,11 +5,8 @@
 
 void runtime_init(Runtime *rt) {
     rt->running = true;
-
-    //log_init("redmagicfancontrold.log");
-    //log_write(LOG_INFO, "RedMagic Fan Control Daemon started");
-
-    config_init(rt);
+    config_init(rt);//load config before anything else
+    logger_init(rt);
     fan_init(rt);
     socket_init(rt);
 }
