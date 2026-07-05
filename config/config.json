@@ -4,6 +4,7 @@
     "log_file": "../config/log",
     "current_log_level": 3,
     "active_profile": "default",
+    "fan_device_path": "/sys/kernel/fan",
     "profiles": [
         {
             "name": "default",

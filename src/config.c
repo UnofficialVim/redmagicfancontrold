@@ -1,6 +1,6 @@
 #include "config.h"
-#include "../external/cjson/cJSON.h"
-#include "../runtime/runtime.h"
+#include "external/cjson/cJSON.h"
+#include "runtime/runtime.h"
 
 #include <string.h>
 #include <strings.h>   // strcasecmp

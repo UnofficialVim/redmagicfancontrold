@@ -7,12 +7,12 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Source files
 set(SOURCES
     src/main.c
-    src/config/config.c
-    src/engine/engine.c
+    src/config.c
+    src/runtime/engine.c
     src/external/cjson/cJSON.c
-    src/fan/fan.c
-    src/ipc/socket.c
-    src/logging/logging.c
+    src/fan.c
+    src/socket.c
+    src/logging.c
     src/runtime/runtime.c
 )
 

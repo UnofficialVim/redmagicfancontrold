@@ -3,10 +3,10 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include "../logging/logging.h"
-#include "../config/config.h"
-#include "../fan/fan.h"
-#include "../ipc/socket.h"
+#include "../logging.h"
+#include "../config.h"
+#include "../fan.h"
+#include "../socket.h"
 
 typedef struct Runtime
 {

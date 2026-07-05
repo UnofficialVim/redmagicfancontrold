@@ -6,7 +6,7 @@ struct Runtime;
 typedef struct Fan {
     int current_speed;
     int target_speed;
-    char *device_path; // Path to the fan device (e.g., /sys/class/hwmon/hwmon0/pwm1)
+    char *fan_device_path; // Path to the fan device (e.g., /sys/kernel/fan/)
 } Fan;
 
 int fan_init(struct Runtime *rt);

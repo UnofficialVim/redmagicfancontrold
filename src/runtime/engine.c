@@ -1,11 +1,11 @@
 #include <stddef.h>
-#include "../runtime/runtime.h"
+#include "runtime.h"
 #include "engine.h"
 
-#include "../logging/logging.h"
-#include "../config/config.h"
-#include "../fan/fan.h"
-#include "../ipc/socket.h"
+#include "../logging.h"
+#include "../config.h"
+#include "../fan.h"
+#include "../socket.h"
 
 
 int engine_init(Runtime *rt)

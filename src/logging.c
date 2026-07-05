@@ -1,8 +1,7 @@
 #include "logging.h"
 #include <stdio.h>
-#include "../runtime/runtime.h"
+#include "runtime/runtime.h"
 #include <time.h>
-
 
 char *time_stamp(void)
 {
@@ -14,7 +13,6 @@ char *time_stamp(void)
     strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", t);
     return buffer;
 }
-
 int logger_init(Runtime *rt)
 {
     // Open the log file in append mode
@@ -33,20 +31,40 @@ void logger_set_level(Runtime *rt, int level)
 }
 void logger_write(Runtime *rt, int level, const char *fmt, ...)
 {
-    if (rt->config.current_log_level)//add logic
+    if (rt->config.current_log_level) // add logic
     {
-        va_list args;
-        va_start(args, fmt);
+
         rt->logger.file = fopen(rt->config.log_file, "a+");
-        fprintf(rt->logger.file, "[%s] ", time_stamp());
-        vfprintf(rt->logger.file, fmt, args);
-        fprintf(rt->logger.file, "\n");
-        fclose(rt->logger.file);
-        va_end(args);
+        if (rt->logger.file == NULL)
+        {
+            printf("Failed to open log file, falling back to stdout\n");
+            // format stdout
+            logger_console(rt, level, fmt);
+        }
+        else
+        {
+            va_list args;
+            va_start(args, fmt);
+            fprintf(rt->logger.file, "[%s] ", time_stamp());
+            vfprintf(rt->logger.file, fmt, args);
+            fprintf(rt->logger.file, "\n");
+            fclose(rt->logger.file);
+            va_end(args);
+        }
     }
 }
 void logger_console(Runtime *rt, int level, const char *fmt, ...)
 {
+
+    if (rt->config.current_log_level)
+    {
+        va_list args;
+        va_start(args, fmt);
+        printf("[%s] ", time_stamp());
+        vprintf(fmt, args);
+        printf("\n");
+        va_end(args);
+    }
 }
 void logger_close(Runtime *rt)
 {

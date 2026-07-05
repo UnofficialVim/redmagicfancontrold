@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "runtime.h"
-#include "../logging/logging.h"
+#include "../logging.h"
 
 void runtime_init(Runtime *rt) {
     rt->running = true;
@@ -12,7 +12,6 @@ void runtime_init(Runtime *rt) {
 }
 void runtime_cleanup(Runtime *rt) {
     rt->running = false;
+    logger_write(rt, 3, "Shutting down");
 
-    //log_write(LOG_INFO, "RedMagic Fan Control Daemon shutting down");
-    //log_cleanup(&rt->logger);
 }

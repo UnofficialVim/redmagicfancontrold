@@ -2,10 +2,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "../runtime/runtime.h"
+#include "runtime/runtime.h"
 
 void socket_init(Runtime *rt) {
-	if (!rt) return;
 	rt->socket.enabled = false;
 	rt->socket.server_fd = -1;
 	rt->socket.client_fd = -1;
@@ -14,7 +13,6 @@ void socket_init(Runtime *rt) {
 }
 
 void socket_cleanup(Runtime *rt) {
-	if (!rt) return;
 	if (rt->socket.client_fd >= 0) close(rt->socket.client_fd);
 	if (rt->socket.server_fd >= 0) close(rt->socket.server_fd);
 	rt->socket.enabled = false;
