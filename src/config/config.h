@@ -32,6 +32,13 @@ typedef struct Config {
     size_t profile_count;
     Profile profiles[MAX_PROFILES];
     Profile *active;
+    char *log_file;
+    enum {
+        LOG_ERROR = 0,
+        LOG_WARN,
+        LOG_INFO,
+        LOG_DEBUG
+    } current_log_level;
 } Config;
 
 void config_init(struct Runtime *rt);

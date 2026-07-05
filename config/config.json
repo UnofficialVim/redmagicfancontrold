@@ -3,6 +3,8 @@
     "call_silence": {
         "enabled": true
     },
+    "log_file": "",
+    "current_log_level": 2,
     "active_profile": "default",
     "profiles": [
         {
