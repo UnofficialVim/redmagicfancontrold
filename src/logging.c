@@ -46,6 +46,7 @@ void logger_write(Runtime *rt, int level, const char *fmt, ...)
             va_list args;
             va_start(args, fmt);
             fprintf(rt->logger.file, "[%s] ", time_stamp());
+            fprintf(rt->logger.file, "%s ", log_level_str[level]);
             vfprintf(rt->logger.file, fmt, args);
             fprintf(rt->logger.file, "\n");
             fclose(rt->logger.file);
@@ -61,6 +62,7 @@ void logger_console(Runtime *rt, int level, const char *fmt, ...)
         va_list args;
         va_start(args, fmt);
         printf("[%s] ", time_stamp());
+        printf("%s "), log_level_str[level];
         vprintf(fmt, args);
         printf("\n");
         va_end(args);

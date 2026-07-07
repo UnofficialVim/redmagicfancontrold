@@ -10,35 +10,50 @@ struct Runtime;
 #define MAX_PROFILE_NAME 32
 #define MAX_PROFILES 8
 
-typedef struct {
+typedef struct
+{
     int temp_c;
     int fan_pct;
 } FanCurveStep;
 
-typedef struct {
+typedef struct
+{
     FanCurveStep steps[MAX_FAN_STEPS];
     size_t step_count;
 } FanCurve;
 
-typedef struct {
+typedef struct
+{
     char name[MAX_PROFILE_NAME];
     FanCurve fan_curve;
 } Profile;
 
-typedef struct Config {
+
+typedef enum {
+        LOG_ERROR = 0,
+        LOG_WARN,
+        LOG_INFO,
+        LOG_DEBUG,
+    LOG_MAX   
+} LogLevel;
+
+static const char *log_level_str[] = {
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DEBUG"
+};
+
+typedef struct Config
+{
     int version;
     bool calls_silence_fan;
-    char active_profile[MAX_PROFILE_NAME]; 
+    char active_profile[MAX_PROFILE_NAME];
     size_t profile_count;
     Profile profiles[MAX_PROFILES];
     Profile *active;
     char *log_file;
-    enum {
-        LOG_ERROR = 0,
-        LOG_WARN,
-        LOG_INFO,
-        LOG_DEBUG
-    } current_log_level;
+    LogLevel current_log_level; 
 } Config;
 
 void config_init(struct Runtime *rt);

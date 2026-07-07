@@ -11,7 +11,8 @@ void runtime_init(Runtime *rt) {
     socket_init(rt);
 }
 void runtime_cleanup(Runtime *rt) {
-    rt->running = false;
-    logger_write(rt, 3, "Shutting down");
 
+    socket_cleanup(rt);
+    logger_write(rt, 2, "Cleaning up Runtime");
+    rt->running = false;
 }

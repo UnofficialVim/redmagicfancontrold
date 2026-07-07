@@ -14,7 +14,5 @@ int main(void) {
 
     engine_shutdown(&rt);
 
-    runtime_cleanup(&rt);
-
     return 0;
 }

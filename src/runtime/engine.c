@@ -19,9 +19,12 @@ void engine_run(Runtime *rt) {
     logger_write(rt, 2, "Starting Event Loop...");
     while (rt->running) {
         //main loop of the engine
+
+        //check with runtime profile and reference current temp
     }
 }
 
 void engine_shutdown(Runtime *rt) {
-    // Implementation for shutting down the engine
+    logger_write(rt, 2, "Shutting Down Engine");
+    runtime_cleanup(rt);
 }
