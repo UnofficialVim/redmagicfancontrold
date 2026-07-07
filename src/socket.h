@@ -16,6 +16,13 @@ typedef struct Socket {
 } Socket;
 
 void socket_init(struct Runtime *rt);
+
+void socket_ready(struct Runtime *rt);
+void socket_accept(struct Runtime *rt);
+void client_ready(struct Runtime *rt);
+void socket_read(struct Runtime *rt);
+void socket_receive(struct Runtime *rt);
+
 void socket_cleanup(struct Runtime *rt);
 
 #endif // SOCKET_H

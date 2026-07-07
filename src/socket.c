@@ -4,6 +4,7 @@
 #include "runtime/runtime.h"
 #include "logging.h"
 #include <string.h>
+#include <fcntl.h>
 
 void socket_init(Runtime *rt) {
 Socket *sock = &rt->socket;
@@ -44,6 +45,8 @@ Socket *sock = &rt->socket;
 
     sock->client_fd = -1;
     sock->enabled = true;
+	int flags = fcntl(sock->server_fd, F_GETFL, 0);
+	fcntl(sock->server_fd, F_SETFL, flags | O_NONBLOCK);
 
 	logger_write(rt, 2, "Initialized Socket");
 }
@@ -55,4 +58,46 @@ void socket_cleanup(Runtime *rt) {
     if (sock->server_fd >= 0) close(sock->server_fd);
     unlink(sock->address.sun_path);
     sock->enabled = false;
+}
+
+void socket_accept(Runtime *rt)
+{
+    Socket *sock = &rt->socket;
+
+    int fd = accept(sock->server_fd, NULL, NULL);
+
+    if (fd < 0)
+        return;
+
+    sock->client_fd = fd;
+
+    int flags = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+    logger_write(rt, 2, "Client connected");
+}
+
+void socket_receive(Runtime *rt)
+{
+    Socket *sock = &rt->socket;
+
+    char buffer[256];
+
+    ssize_t n = recv(sock->client_fd,
+                     buffer,
+                     sizeof(buffer) - 1,
+                     0);
+
+    if (n <= 0) {
+        close(sock->client_fd);
+        sock->client_fd = -1;
+        logger_write(rt, 2, "Client disconnected");
+        return;
+    }
+
+    buffer[n] = '\0';
+
+    printf("Received: %s\n", buffer);
+
+    // Parse command...
 }
