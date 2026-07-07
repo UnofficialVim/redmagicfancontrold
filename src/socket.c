@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include "runtime/runtime.h"
 #include "logging.h"
+#include <string.h>
 
 void socket_init(Runtime *rt) {
 Socket *sock = &rt->socket;
