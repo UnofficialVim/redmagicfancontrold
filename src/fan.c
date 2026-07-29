@@ -69,25 +69,33 @@ int fan_set_speed(Runtime *rt, int speed)
 
 int fan_get_speed(Runtime *rt)
 {
-	FILE *fp = fopen(append_fan_function(rt, fan_function_str[FAN_SPEED_LEVEL]), "r");
-	if (fp == NULL)
-	{
-		logger_write(rt, 1, "fp NULL in function fan_get_speed");
-		return -1;
-	}
-	int speed;
+    FILE *fp = fopen(
+        append_fan_function(rt, fan_function_str[FAN_SPEED_LEVEL]),
+        "r"
+    );
+
+    if (fp == NULL)
+    {
+        logger_write(rt, 1, "fp NULL in function fan_get_speed");
+        return -1;
+    }
+
+    int speed;
+
     if (fscanf(fp, "%d", &speed) != 1)
     {
         logger_write(rt, 1, "Failed to read fan speed");
         fclose(fp);
         return -1;
     }
-	fclose(fp);
-	return 0;
+
+    fclose(fp);
+
+    return speed;
 }
 
 int fan_update_speed(Runtime *rt)
 {
-	rt->fan.current_speed = rt->fan.target_speed;
+	
 	return 0;
 }

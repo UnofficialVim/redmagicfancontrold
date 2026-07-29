@@ -40,6 +40,9 @@ int fan_init(struct Runtime *rt);
 int fan_set_speed(struct Runtime *rt, int speed);
 int fan_get_speed(struct Runtime *rt);
 int fan_update_speed(struct Runtime *rt);
+
+//helper function to append the device path and a fan function string
 char *append_fan_function(struct Runtime *rt, char *function);
+
 
 #endif // FAN_H

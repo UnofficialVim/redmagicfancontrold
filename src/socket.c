@@ -5,14 +5,17 @@
 #include "logging.h"
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
-void socket_init(Runtime *rt) {
-Socket *sock = &rt->socket;
-	//stub for socket path
-	strcpy(sock->socket_path, "/tmp/rmfc_socket");
+void socket_init(Runtime *rt)
+{
+    Socket *sock = &rt->socket;
+    // stub for socket path
+    strcpy(sock->socket_path, "/tmp/rmfc_socket");
 
     sock->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock->server_fd < 0) {
+    if (sock->server_fd < 0)
+    {
         perror("socket_init: socket()");
         sock->enabled = false;
         return;
@@ -27,17 +30,19 @@ Socket *sock = &rt->socket;
 
     sock->addrlen = sizeof(sock->address);
 
-    if (bind(sock->server_fd, (struct sockaddr *)&sock->address, sock->addrlen) < 0) {
+    if (bind(sock->server_fd, (struct sockaddr *)&sock->address, sock->addrlen) < 0)
+    {
         perror("socket_init: bind()");
-		logger_write(rt, 0, "Failed to bind() socket");
+        logger_write(rt, 0, "Failed to bind() socket");
         close(sock->server_fd);
         sock->enabled = false;
         return;
     }
 
-    if (listen(sock->server_fd, 1) < 0) {
+    if (listen(sock->server_fd, 1) < 0)
+    {
         perror("socket_init: listen()");
-		logger_write(rt, 0, "Failed start socket listener");
+        logger_write(rt, 0, "Failed start socket listener");
         close(sock->server_fd);
         sock->enabled = false;
         return;
@@ -45,17 +50,20 @@ Socket *sock = &rt->socket;
 
     sock->client_fd = -1;
     sock->enabled = true;
-	int flags = fcntl(sock->server_fd, F_GETFL, 0);
-	fcntl(sock->server_fd, F_SETFL, flags | O_NONBLOCK);
+    int flags = fcntl(sock->server_fd, F_GETFL, 0);
+    fcntl(sock->server_fd, F_SETFL, flags | O_NONBLOCK);
 
-	logger_write(rt, 2, "Initialized Socket");
+    logger_write(rt, 2, "Initialized Socket");
 }
 
-void socket_cleanup(Runtime *rt) {
-	Socket *sock = &rt->socket;
+void socket_cleanup(Runtime *rt)
+{
+    Socket *sock = &rt->socket;
 
-    if (sock->client_fd >= 0) close(sock->client_fd);
-    if (sock->server_fd >= 0) close(sock->server_fd);
+    if (sock->client_fd >= 0)
+        close(sock->client_fd);
+    if (sock->server_fd >= 0)
+        close(sock->server_fd);
     unlink(sock->address.sun_path);
     sock->enabled = false;
 }
@@ -67,7 +75,11 @@ void socket_accept(Runtime *rt)
     int fd = accept(sock->server_fd, NULL, NULL);
 
     if (fd < 0)
+    {
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+            logger_write(rt, 1, "accept() failed");
         return;
+    }
 
     sock->client_fd = fd;
 
@@ -83,12 +95,20 @@ void socket_receive(Runtime *rt)
 
     char buffer[256];
 
-    ssize_t n = recv(sock->client_fd,
-                     buffer,
-                     sizeof(buffer) - 1,
-                     0);
+    ssize_t n = recv(sock->client_fd, buffer, sizeof(buffer) - 1, 0);
 
-    if (n <= 0) {
+    if (n < 0)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return; // no data yet, not a disconnect
+
+        close(sock->client_fd);
+        sock->client_fd = -1;
+        logger_write(rt, 2, "Client disconnected (error)");
+        return;
+    }
+    if (n == 0)
+    {
         close(sock->client_fd);
         sock->client_fd = -1;
         logger_write(rt, 2, "Client disconnected");
@@ -100,4 +120,26 @@ void socket_receive(Runtime *rt)
     printf("Received: %s\n", buffer);
 
     // Parse command...
+
+    const char *response = "Command received\n";
+
+    send(sock->client_fd,
+         response,
+         strlen(response),
+         0);
+
+    if (strncmp(buffer, "GetCpuTemp", 10) == 0)
+    {
+        // Get temperature
+        send(sock->client_fd, "42\n", 3, 0);
+    }
+    else if (strncmp(buffer, "getSomeFanInfo", 14) == 0)
+    {
+        // Get fan info
+        send(sock->client_fd, "Fan: 2500 RPM\n", 15, 0);
+    }
+    else
+    {
+        send(sock->client_fd, "Unknown command\n", 16, 0);
+    }
 }
