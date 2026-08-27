@@ -13,6 +13,29 @@ TODO:
 This works just enough for the program to continue
 */
 
+//fallback config in case the config file is missing or invalid
+static Config fallback_config = {
+    .version = 1,
+    .calls_silence_fan = true,
+    .active_profile = "default",
+    .profile_count = 1,
+    .profiles = {
+        {
+            .name = "default",
+            .fan_curve = {
+                .step_count = 2,
+                .steps = {
+                    { .temp_c = 50, .fan_pct = 1 },
+                    { .temp_c = 80, .fan_pct = 5 }
+                }
+            }
+        }
+    },
+    .active = NULL,
+    .log_file = "rmfc.log",
+    .current_log_level = LOG_INFO
+};
+
 static int parse_log_level(const char *s) {
     if (!s) return LOG_INFO;
     if (strcasecmp(s, "error") == 0) return LOG_ERROR;
@@ -63,14 +86,22 @@ void config_init(Runtime *rt) {
     rt->config.current_log_level = LOG_INFO;
 
     FILE *fp = fopen("../config/config.json", "r");
-    if (!fp) { fprintf(stderr, "Could not open config.json for reading\n"); return; }
+    if (!fp) { 
+        logger_write(rt, 1, "Failed to open config file, using fallback config");
+        rt->config = fallback_config;
+        return;
+    }
 
     fseek(fp, 0, SEEK_END);
     long file_size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
     char *buffer = malloc(file_size + 1);
-    if (!buffer) { fprintf(stderr, "Memory allocation failed for buffer\n"); fclose(fp); return; }
+    if (!buffer) { 
+        logger_write(rt, 1, "Memory allocation failed for config buffer, using fallback config");
+        rt->config = fallback_config;
+        fclose(fp);
+        return; }
 
     size_t n = fread(buffer, 1, file_size, fp);
     buffer[n] = '\0';
@@ -78,7 +109,11 @@ void config_init(Runtime *rt) {
 
     cJSON *json = cJSON_Parse(buffer);
     free(buffer);
-    if (!json) { fprintf(stderr, "Error parsing JSON: %s\n", cJSON_GetErrorPtr()); return; }
+    if (!json) { 
+        logger_write(rt, 1, "Error parsing JSON, using fallback config");
+        rt->config = fallback_config;
+        return;
+    }
 
     cJSON *item = NULL;
     cJSON_ArrayForEach(item, json) {

@@ -8,6 +8,7 @@
 #include "../fan.h"
 #include "../socket.h"
 #include <signal.h>
+ #include "../temperature.h"
 
 typedef struct Runtime
 {
@@ -22,6 +23,8 @@ typedef struct Runtime
     Fan fan;
 
     Socket socket;
+
+    Temperature temperature;
 
 } Runtime;
 

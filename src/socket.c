@@ -1,3 +1,4 @@
+#include "socket.h"
 #include "logging.h"
 #include "runtime/runtime.h"
 #include <errno.h>

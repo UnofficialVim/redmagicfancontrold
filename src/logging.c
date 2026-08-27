@@ -15,8 +15,7 @@ char *time_stamp(void)
 }
 int logger_init(Runtime *rt)
 {
-    // Open the log file in append mode
-    rt->logger.file = fopen(rt->config.log_file, "a+");
+    rt->logger.file = fopen(rt->config.log_file, "w+");
     if (rt->logger.file == NULL)
     {
         printf("Failed to open log file '%s'\n", rt->config.log_file ? rt->config.log_file : "(null)");
@@ -31,7 +30,7 @@ void logger_set_level(Runtime *rt, int level)
 }
 void logger_write(Runtime *rt, int level, const char *fmt, ...)
 {
-    if (rt->config.current_log_level) // add logic
+    if (rt->config.current_log_level) 
     {
 
         rt->logger.file = fopen(rt->config.log_file, "a+");

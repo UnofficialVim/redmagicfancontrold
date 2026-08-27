@@ -11,6 +11,8 @@
 #include "engine.h"
 #include "runtime.h"
 #include <stdatomic.h>
+#include <../temperature.h>
+
 
 const int REFRESH_RATE = 5; // stub for now
 
@@ -67,8 +69,26 @@ void engine_run(Runtime *rt) {
 
     now = time(NULL);
     if (now >= next_fan_check) {
-      if (fan_get_speed(rt) == 0)
-        logger_write(rt, 1, "fan_get_speed failed with a non zero value");
+      //update temperature readings
+      rt->temperature.cpu_temp = temperature_get_cpu_temp(rt);
+      logger_write(rt, 3, "Current CPU Temperature: %d", rt->temperature.cpu_temp);
+
+      //find where the current temperature falls in the fan curve and set the fan speed accordingly
+      if (rt->config.active) {
+        FanCurve *curve = &rt->config.active->fan_curve;
+        int target_speed = 0;
+        for (size_t i = 0; i < curve->step_count; i++) {
+          if (rt->temperature.cpu_temp >= curve->steps[i].temp_c) {
+            target_speed = curve->steps[i].fan_pct;
+          } else {
+            break; //temperature is below this step, so stop checking
+            }
+        }
+        logger_write(rt, 3, "Setting fan speed to %d based on CPU temperature %d", target_speed, rt->temperature.cpu_temp);
+        fan_set_speed(rt, target_speed);//either this or check it first but you gotta open it anyway
+      
+      }
+
       next_fan_check = now + REFRESH_RATE;
     }
   }

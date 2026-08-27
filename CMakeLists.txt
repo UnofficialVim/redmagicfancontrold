@@ -14,6 +14,7 @@ set(SOURCES
     src/socket.c
     src/logging.c
     src/runtime/runtime.c
+    src/temperature.c
 )
 
 # Include directories
@@ -23,10 +24,10 @@ include_directories(
     src/engine
     src/external/cjson
     src/fan
+    src/temperature
     src/ipc
     src/logging
     src/runtime
-    
 )
 
 # Create executable

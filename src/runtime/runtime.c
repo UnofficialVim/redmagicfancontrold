@@ -8,6 +8,8 @@
 static void handle_shutdown_signal(int sig) {
   (void)sig;
     // Set the shutdown_requested flag in the Runtime struct
+    Runtime *rt = (Runtime *)sig; // Cast the signal number to Runtime pointer
+    rt->shutdown_requested = 1;
 }
 
 void runtime_init(Runtime *rt) {
@@ -25,6 +27,7 @@ void runtime_init(Runtime *rt) {
   logger_init(rt);
   fan_init(rt);
   socket_init(rt);
+  temperature_init(rt);
 }
 void runtime_cleanup(Runtime *rt) {
 
