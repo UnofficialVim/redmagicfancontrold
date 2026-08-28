@@ -54,9 +54,8 @@ dkms.conf
 # debug information files
 *.dwo
 
-build_linux/
-build_android/
-build_linux.sh
-build_android.sh
 build/
+build_linux/
+build_aarch64/
+build_aarch64-musl/
 config/log

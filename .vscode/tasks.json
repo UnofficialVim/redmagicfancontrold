@@ -4,7 +4,23 @@
         {
             "label": "Build Project",
             "type": "shell",
-            "command": "cmake --build build",
+            "command": "cmake --build --preset linux",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+
+            "label": "build Android",
+            "type": "shell",
+            "command": "cmake --build --preset aarch64",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -15,6 +31,34 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "stop on device",
+            "type": "shell",
+            "command": "adb shell pkill -x redmagicfancontrold || true",
+            "dependsOn": "build Android",
+            "problemMatcher": []
+        },
+        {
+            "label": "push to device",
+            "type": "shell",
+            "command": "adb push \"${workspaceFolder}/build_aarch64/redmagicfancontrold\" /data/local/tmp/redmagicfancontrold",
+            "dependsOn": "stop on device",
+            "problemMatcher": []
+        },
+        {
+            "label": "chmod on device",
+            "type": "shell",
+            "command": "adb shell chmod +x /data/local/tmp/redmagicfancontrold",
+            "dependsOn": "push to device",
+            "problemMatcher": []
+        },
+        {
+            "label": "forward lldb port",
+            "type": "shell",
+            "command": "adb forward tcp:5039 tcp:5039",
+            "dependsOn": "chmod on device",
+            "problemMatcher": []
         }
     ]
 }

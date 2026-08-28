@@ -11,7 +11,7 @@
 #include "engine.h"
 #include "runtime.h"
 #include <stdatomic.h>
-#include <../temperature.h>
+#include "../temperature.h"
 
 
 const int REFRESH_RATE = 5; // stub for now

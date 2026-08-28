@@ -2,6 +2,7 @@
 #include "runtime/runtime.h"
 #include "stdio.h"
 #include <stdlib.h>
+ #include <string.h>
 
 int fan_init(Runtime *rt) {
   // find the fan hardware path
