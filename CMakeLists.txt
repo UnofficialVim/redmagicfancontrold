@@ -20,13 +20,7 @@ set(SOURCES
 # Include directories
 include_directories(
     src
-    src/config
-    src/engine
     src/external/cjson
-    src/fan
-    src/temperature
-    src/ipc
-    src/logging
     src/runtime
 )
 

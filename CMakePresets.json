@@ -13,7 +13,7 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
@@ -23,7 +23,7 @@
             "binaryDir": "${sourceDir}/build_aarch64-musl",
             "toolchainFile": "${sourceDir}/cmake/toolchains/aarch64-unknown-linux-musl.cmake",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
@@ -33,7 +33,7 @@
             "binaryDir": "${sourceDir}/build_aarch64",
             "toolchainFile": "$env{ANDROID_NDK}/build/cmake/android.toolchain.cmake",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_BUILD_TYPE": "Debug",
                 "ANDROID_ABI": "arm64-v8a",
                 "ANDROID_PLATFORM": "android-35"
             }
