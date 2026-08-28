@@ -17,16 +17,13 @@
             },
         },
         {
-
             "label": "build Android",
             "type": "shell",
             "command": "cmake --build --preset aarch64",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "problemMatcher": [
-                "$gcc"
-            ],
+            "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -35,21 +32,21 @@
         {
             "label": "stop on device",
             "type": "shell",
-            "command": "adb shell pkill -x redmagicfancontrold || true",
+            "command": "adb shell su -c 'pkill -x redmagicfancontrold || true'",
             "dependsOn": "build Android",
             "problemMatcher": []
         },
         {
             "label": "push to device",
             "type": "shell",
-            "command": "adb push \"${workspaceFolder}/build_aarch64/redmagicfancontrold\" /data/local/tmp/redmagicfancontrold",
+            "command": "adb push '${workspaceFolder}/build_aarch64/redmagicfancontrold' /data/local/tmp/redmagicfancontrold",
             "dependsOn": "stop on device",
             "problemMatcher": []
         },
         {
             "label": "chmod on device",
             "type": "shell",
-            "command": "adb shell chmod +x /data/local/tmp/redmagicfancontrold",
+            "command": "adb shell su -c chmod +x /data/local/tmp/redmagicfancontrold",
             "dependsOn": "push to device",
             "problemMatcher": []
         },
@@ -58,6 +55,13 @@
             "type": "shell",
             "command": "adb forward tcp:5039 tcp:5039",
             "dependsOn": "chmod on device",
+            "problemMatcher": []
+        },
+        {
+            "label": "start lldb-server",
+            "type": "shell",
+            "command": "adb shell su -c './data/local/tmp/lldb-server platform --server --listen *:5039 >/data/local/tmp/lldb-server.log 2>&1 &'",
+            "dependsOn": "forward lldb port",
             "problemMatcher": []
         }
     ]

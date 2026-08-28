@@ -14,38 +14,23 @@
             "miDebuggerPath": "/usr/bin/gdb",
             "preLaunchTask": "Build Project"
         },
-        {
-            "name": "Debug on device (lldb-server)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build_aarch64/redmagicfancontrold",
-            "cwd": "${workspaceFolder}",
-            "MIMode": "lldb",
-            "miDebuggerPath": "/usr/bin/lldb-mi",
-            "preLaunchTask": "forward lldb port",
-            "customLaunchSetupCommands": [
                 {
-                    "text": "platform select remote-android",
-                    "description": "select Android platform plugin",
-                    "ignoreFailures": false
-                },
-                {
-                    "text": "platform connect connect://localhost:5039",
-                    "description": "connect to lldb-server via the forwarded port",
-                    "ignoreFailures": false
-                },
-                {
-                    "text": "platform settings -w /data/local/tmp",
-                    "description": "set remote working directory",
-                    "ignoreFailures": true
-                },
-                {
-                    "text": "target create ${workspaceFolder}/build_aarch64/redmagicfancontrold",
-                    "description": "load local binary + symbols",
-                    "ignoreFailures": false
-                }
+            "name": "Debug Android",
+            "type": "lldb",
+            "request": "custom",
+
+            "targetCreateCommands": [
+                "platform select remote-android",
+                "platform connect connect://127.0.0.1:5039",
+                "platform settings -w /data/local/tmp",
+                "target create ${workspaceFolder}/build_aarch64/redmagicfancontrold"
             ],
-            "launchCompleteCommand": "exec-run"
-        },
+
+            "processCreateCommands": [
+                "process launch"
+            ],
+
+            "preLaunchTask": "start lldb-server"
+        }
     ]
 }

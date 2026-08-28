@@ -79,6 +79,7 @@ void engine_run(Runtime *rt) {
         int target_speed = 0;
         for (size_t i = 0; i < curve->step_count; i++) {
           if (rt->temperature.cpu_temp >= curve->steps[i].temp_c) {
+            logger_write(rt, 3, "Temperature %d >= step %zu temp %d, setting target speed to %d", rt->temperature.cpu_temp, i, curve->steps[i].temp_c, curve->steps[i].fan_pct);
             target_speed = curve->steps[i].fan_pct;
           } else {
             break; //temperature is below this step, so stop checking

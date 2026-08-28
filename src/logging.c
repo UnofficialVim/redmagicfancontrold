@@ -15,11 +15,15 @@ char *time_stamp(void)
 }
 int logger_init(Runtime *rt)
 {
+    rt->config.current_log_level = LOG_DEBUG; //bandaid fix for logger being initialized before config is loaded
+    rt->logger.write_to_console = false;
     rt->logger.file = fopen(rt->config.log_file, "w+");
     if (rt->logger.file == NULL)
     {
+        rt->logger.write_to_console = true;
         printf("Failed to open log file '%s'\n", rt->config.log_file ? rt->config.log_file : "(null)");
         return -1; // Indicate initialization failure
+
     }
     // Write init message
     logger_write(rt, 2, "Logger initialized");
@@ -32,10 +36,16 @@ void logger_write(Runtime *rt, int level, const char *fmt, ...)
 {
     if (rt->config.current_log_level) 
     {
+        if(rt->logger.write_to_console)
+        {
+            logger_console(rt, level, fmt);
+            return;
+        }
 
         rt->logger.file = fopen(rt->config.log_file, "a+");
         if (rt->logger.file == NULL)
         {
+            rt->logger.write_to_console = true;
             printf("Failed to open log file, falling back to stdout\n");
             // format stdout
             logger_console(rt, level, fmt);

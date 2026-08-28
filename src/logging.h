@@ -3,11 +3,16 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdbool.h>
 struct Runtime;
 
 typedef struct Logger {
     FILE *file;
+    bool write_to_console;
+    int current_log_level;
 } Logger;
+
+
 
 int logger_init(struct Runtime *rt);
 void logger_set_level(struct Runtime *rt, int level);

@@ -22,9 +22,9 @@ void runtime_init(Runtime *rt) {
   sa.sa_flags = 0; // no SA_RESTART: let blocking epoll_wait return EINTR
   sigaction(SIGTERM, &sa, NULL);
   sigaction(SIGINT, &sa, NULL);
-
-  config_init(rt); // load config before anything else
   logger_init(rt);
+  
+  config_init(rt); // load config before anything else
   fan_init(rt);
   socket_init(rt);
   temperature_init(rt);

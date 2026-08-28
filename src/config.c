@@ -3,9 +3,10 @@
 #include "runtime/runtime.h"
 
 #include <string.h>
-#include <strings.h>   // strcasecmp
+#include <strings.h>   
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 /*
 TODO: 
@@ -23,17 +24,20 @@ static Config fallback_config = {
         {
             .name = "default",
             .fan_curve = {
-                .step_count = 2,
+                .step_count = 5,
                 .steps = {
-                    { .temp_c = 50, .fan_pct = 1 },
-                    { .temp_c = 80, .fan_pct = 5 }
+                    { .temp_c = 40000, .fan_pct = 1 },
+                    { .temp_c = 45000, .fan_pct = 2 },
+                    { .temp_c = 50000, .fan_pct = 3 },
+                    { .temp_c = 60000, .fan_pct = 4 },
+                    { .temp_c = 70000, .fan_pct = 5 }
                 }
             }
         }
     },
-    .active = NULL,
+    .active = &fallback_config.profiles[0], //points to the first profile in profiles[]
     .log_file = "rmfc.log",
-    .current_log_level = LOG_INFO
+    .current_log_level = LOG_DEBUG
 };
 
 static int parse_log_level(const char *s) {
@@ -83,11 +87,12 @@ static bool parse_profile(cJSON *profile_json, Profile *profile) {
 
 void config_init(Runtime *rt) {
     memset(&rt->config, 0, sizeof(Config));
-    rt->config.current_log_level = LOG_INFO;
+    rt->config.current_log_level = LOG_DEBUG; // default to debug until config is loaded
 
     FILE *fp = fopen("../config/config.json", "r");
-    if (!fp) { 
+    if (fp == NULL || ferror(fp)) { 
         logger_write(rt, 1, "Failed to open config file, using fallback config");
+        //logger_write(rt, 1, "Error: %s", strerror(errno));
         rt->config = fallback_config;
         return;
     }
@@ -115,6 +120,7 @@ void config_init(Runtime *rt) {
         return;
     }
 
+    //assign values from JSON to config struct
     cJSON *item = NULL;
     cJSON_ArrayForEach(item, json) {
         if (!item->string) continue;

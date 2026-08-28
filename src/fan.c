@@ -7,7 +7,7 @@
 int fan_init(Runtime *rt) {
   // find the fan hardware path
   //  /sys/kernel/fan/
-  rt->fan.fan_device_path = "/sys/kernel/fan"; // stub, but is correct
+  rt->fan.fan_device_path = "/sys/kernel/fan/"; // stub, but is correct NOTE: path needs a trailing slash for append_fan_function to work correctly
   if (!rt->fan.fan_device_path == NULL) {
     logger_write(rt, 2, "Found fan device path");
   } else {
