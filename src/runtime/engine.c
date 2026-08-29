@@ -6,28 +6,23 @@
 
 #include "../config.h"
 #include "../fan.h"
-#include "../logging.h"
+#include "../logger.h"
 #include "../socket.h"
+#include "../temperature.h"
 #include "engine.h"
 #include "runtime.h"
 #include <stdatomic.h>
-#include "../temperature.h"
-
 
 const int REFRESH_RATE = 5; // stub for now
 
-int engine_init(Runtime *rt) {
-  logger_write(rt, 2, "Initialized Engine");
-  return 0;
-}
-
 void engine_run(Runtime *rt) {
-  logger_write(rt, 2, "Starting Event Loop...");
+  logger_info("Starting Event Loop...");
 
   time_t next_fan_check = time(NULL) + REFRESH_RATE;
 
   // Main event loop
   while (rt->running && !rt->shutdown_requested) {
+    logger_trace("Engine : Event Loop Iteration started");
     struct pollfd fds[2];
     int nfds = 0;
 
@@ -53,8 +48,9 @@ void engine_run(Runtime *rt) {
 
     if (ret < 0) {
       if (errno == EINTR)
-        continue; // interrupted by signal, just re-check rt->running
-      logger_write(rt, 0, "poll() failed");
+        logger_errno(LOGGER_INFO, 0, "Poll() interrupted by signal");
+      continue; // interrupted by signal, just re-check rt->running
+      logger_fatal("Poll() failed");
       break;
     }
 
@@ -69,33 +65,41 @@ void engine_run(Runtime *rt) {
 
     now = time(NULL);
     if (now >= next_fan_check) {
-      //update temperature readings
+      // update temperature readings
       rt->temperature.cpu_temp = temperature_get_cpu_temp(rt);
-      logger_write(rt, 3, "Current CPU Temperature: %d", rt->temperature.cpu_temp);
+      logger_debug("Current CPU Temperature: %d", rt->temperature.cpu_temp);
 
-      //find where the current temperature falls in the fan curve and set the fan speed accordingly
+      // find where the current temperature falls in the fan curve and set the
+      // fan speed accordingly
       if (rt->config.active) {
         FanCurve *curve = &rt->config.active->fan_curve;
         int target_speed = 0;
         for (size_t i = 0; i < curve->step_count; i++) {
           if (rt->temperature.cpu_temp >= curve->steps[i].temp_c) {
-            logger_write(rt, 3, "Temperature %d >= step %zu temp %d, setting target speed to %d", rt->temperature.cpu_temp, i, curve->steps[i].temp_c, curve->steps[i].fan_pct);
+            logger_debug("Temperature %d >= step %zu temp %d, setting target "
+                         "speed to %d",
+                         rt->temperature.cpu_temp, i, curve->steps[i].temp_c,
+                         curve->steps[i].fan_pct);
             target_speed = curve->steps[i].fan_pct;
           } else {
-            break; //temperature is below this step, so stop checking
-            }
+            break; // temperature is below this step, so stop checking
+          }
         }
-        logger_write(rt, 3, "Setting fan speed to %d based on CPU temperature %d", target_speed, rt->temperature.cpu_temp);
-        fan_set_speed(rt, target_speed);//either this or check it first but you gotta open it anyway
-      
+        if (rt->temperature.cpu_temp == -1) {
+          logger_debug("Temperature reading failed, not changing fan speed");
+        } else {
+          logger_debug("Setting fan speed to %d based on CPU temperature %d",
+                       target_speed, rt->temperature.cpu_temp);
+          fan_set_speed(rt, target_speed); // either this or check it first but
+                                           // you gotta open it anyway
+        }
       }
-
       next_fan_check = now + REFRESH_RATE;
     }
   }
 }
 
 void engine_shutdown(Runtime *rt) {
-  logger_write(rt, 2, "Shutting Down Engine");
+  logger_info("Shutting Down Engine");
   runtime_cleanup(rt);
 }

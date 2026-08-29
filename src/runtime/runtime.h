@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include "../logging.h"
 #include "../config.h"
 #include "../fan.h"
 #include "../socket.h"
@@ -15,8 +14,6 @@ typedef struct Runtime
     bool running;
 
     volatile sig_atomic_t shutdown_requested;
-
-    Logger logger;
 
     Config config;
 

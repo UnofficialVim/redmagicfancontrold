@@ -2,7 +2,7 @@
     "version": 1,
     "calls_silence_fan": true,
     "log_file": "../config/log",
-    "current_log_level": 3,
+    "current_log_level": "LOGGER_TRACE",
     "active_profile": "default",
     "fan_device_path": "/sys/kernel/fan",
     "profiles": [

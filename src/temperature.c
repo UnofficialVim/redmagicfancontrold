@@ -1,6 +1,6 @@
 #include "temperature.h"
 #include "runtime/runtime.h"
-#include "logging.h"
+#include "logger.h"
 #include <stddef.h>
 #include <stdio.h>
 
@@ -15,7 +15,7 @@ int temperature_init(Runtime *rt) {
   rt->temperature.cpu_temp_path[3] =
       "/sys/class/thermal/thermal_zone13/temp"; // Example path for CPU temp
 
-  logger_write(rt, 2, "Initialized Temperature Monitoring");
+  logger_info("Initialized Temperature Monitoring");
   return 0;
 }
 
@@ -26,6 +26,10 @@ int temperature_get_cpu_temp(Runtime *rt) {
 
   while (rt->temperature.cpu_temp_path[i] != NULL) {
     FILE *fp = fopen(rt->temperature.cpu_temp_path[i], "r");
+    if( fp == NULL ) {
+      logger_errno(LOGGER_WARN,"Failed to open temperature file %s", rt->temperature.cpu_temp_path[i]);
+      break;
+    }
     int temp = 0;
     if (fscanf(fp, "%d", &temp) == 1) {
       total_temp += temp;
@@ -34,6 +38,11 @@ int temperature_get_cpu_temp(Runtime *rt) {
     fclose(fp);
     i++;
   }
+  if (cpu_zones == 0){
+  logger_warn("cpu_zones empty");
+  return -1; 
+}
+
   total_temp /= cpu_zones; // Average temperature
   return total_temp;
 }

@@ -12,7 +12,7 @@ set(SOURCES
     src/external/cjson/cJSON.c
     src/fan.c
     src/socket.c
-    src/logging.c
+    src/logger.c
     src/runtime/runtime.c
     src/temperature.c
 )

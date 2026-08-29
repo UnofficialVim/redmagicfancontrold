@@ -1,5 +1,5 @@
 #include "runtime.h"
-#include "../logging.h"
+#include "../logger.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <signal.h>
@@ -10,6 +10,7 @@ static void handle_shutdown_signal(int sig) {
     // Set the shutdown_requested flag in the Runtime struct
     Runtime *rt = (Runtime *)sig; // Cast the signal number to Runtime pointer
     rt->shutdown_requested = 1;
+    logger_info("Shutdown requested");
 }
 
 void runtime_init(Runtime *rt) {
@@ -22,7 +23,6 @@ void runtime_init(Runtime *rt) {
   sa.sa_flags = 0; // no SA_RESTART: let blocking epoll_wait return EINTR
   sigaction(SIGTERM, &sa, NULL);
   sigaction(SIGINT, &sa, NULL);
-  logger_init(rt);
   
   config_init(rt); // load config before anything else
   fan_init(rt);
@@ -32,6 +32,6 @@ void runtime_init(Runtime *rt) {
 void runtime_cleanup(Runtime *rt) {
 
   socket_cleanup(rt);
-  logger_write(rt, 2, "Cleaning up Runtime");
+  logger_info("Cleaning up Runtime");
   rt->running = false;
 }

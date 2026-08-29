@@ -1,21 +1,26 @@
-#include "logging.h"
+#include "logger.h"
 #include "runtime/runtime.h"
 #include "stdio.h"
 #include <stdlib.h>
- #include <string.h>
+#include <string.h>
+#include <unistd.h>
+
+int file_exists(const char *filename) {
+    return access(filename, F_OK) == 0; 
+}
 
 int fan_init(Runtime *rt) {
   // find the fan hardware path
   //  /sys/kernel/fan/
   rt->fan.fan_device_path = "/sys/kernel/fan/"; // stub, but is correct NOTE: path needs a trailing slash for append_fan_function to work correctly
-  if (!rt->fan.fan_device_path == NULL) {
-    logger_write(rt, 2, "Found fan device path");
+  if (file_exists(rt->fan.fan_device_path)) {
+    logger_info("Fan device path set %s", rt->fan.fan_device_path);
   } else {
-    logger_write(rt, 0, "No fan path found");
+    logger_warn("No fan device found at %s", rt->fan.fan_device_path);
     return -1;
   }
 
-  logger_write(rt, 2, "Initialized Fan Control");
+  //logger_write(rt, 2, "Initialized Fan Control");
   return 0;
 }
 
@@ -23,20 +28,19 @@ char *append_fan_function(Runtime *rt, char *function) {
   size_t len = strlen(rt->fan.fan_device_path) + strlen(function) + 2;
   char *new_path = malloc(len);
   if (new_path == NULL) {
-    logger_write(rt, 1,
-                 "Failed to append char fan function to char device path");
+    logger_warn("Failed to append char fan function to char device path");
     return NULL;
   }
 
   snprintf(new_path, len, "%s%s", rt->fan.fan_device_path, function);
 
-  logger_write(rt, 3, "Appending fan function to device path: %s", new_path);
+  logger_trace("Appending fan function to device path: %s", new_path);
   return new_path;
 }
 
 int fan_set_speed(Runtime *rt, int speed) {
   if (speed < 0 || speed > 5) {
-    logger_write(rt, 1, "Invalid fan speed, use 0-5");
+    logger_warn("Fan speed int set outside of 0-5");
     return -1;
   }
 
@@ -44,11 +48,11 @@ int fan_set_speed(Runtime *rt, int speed) {
       fopen(append_fan_function(rt, fan_function_str[FAN_SPEED_LEVEL]), "w");
 
   if (fp == NULL) {
-    logger_write(rt, 1, "fp NULL in function fan_set_speed");
+    logger_errno(LOGGER_FATAL,"Failed to open fan speed level file");
     return -1;
   }
   if (fprintf(fp, "%d\n", speed) < 0) {
-    logger_write(rt, 1, "Failed to write fan speed");
+    logger_errno(LOGGER_ERROR,"Failed to write fan speed");
     fclose(fp);
     return -1;
   }
@@ -61,19 +65,16 @@ int fan_get_speed(Runtime *rt) {
       fopen(append_fan_function(rt, fan_function_str[FAN_SPEED_LEVEL]), "r");
 
   if (fp == NULL) {
-    logger_write(rt, 1, "fp NULL in function fan_get_speed");
+    logger_errno(LOGGER_WARN, "Failed to open fan speed level file");
     return -1;
   }
 
   int speed;
-
   if (fscanf(fp, "%d", &speed) != 1) {
-    logger_write(rt, 1, "Failed to read fan speed");
+    logger_errno(LOGGER_WARN, "Failed to read fan speed");
     fclose(fp);
     return -1;
   }
-
   fclose(fp);
-
   return speed;
 }

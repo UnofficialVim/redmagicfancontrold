@@ -1,53 +1,57 @@
 #include "socket.h"
-#include "logging.h"
+#include "logger.h"
 #include "runtime/runtime.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <limits.h>
 
-static bool get_exe_dir(char *out, size_t out_size) {
-  char exe_path[PATH_MAX];
-  ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+static bool get_running_dir(char *out, size_t out_size) {
+  char running_path[PATH_MAX];
+  ssize_t len =
+      readlink("/proc/self/exe", running_path, sizeof(running_path) - 1);
   if (len < 0) {
-    perror("get_exe_dir: readlink");
+    logger_errno(LOGGER_WARN, "Failed to read running path");
     return false;
   }
-  exe_path[len] = '\0';
+  running_path[len] = '\0';
 
-  char *slash = strrchr(exe_path, '/');
-  if (!slash) return false;
+  char *slash = strrchr(running_path, '/');
+  if (!slash)
+    return false;
   *slash = '\0';
 
-  if (strlen(exe_path) >= out_size) return false;
-  memcpy(out, exe_path, strlen(exe_path) + 1);
+  if (strlen(running_path) >= out_size)
+    return false;
+  memcpy(out, running_path, strlen(running_path) + 1);
   return true;
 }
 
 void socket_init(Runtime *rt) {
   Socket *sock = &rt->socket;
 
-  char exe_dir[PATH_MAX];
-  if (!get_exe_dir(exe_dir, sizeof(exe_dir))) {
-    logger_write(rt, 0, "socket_init: failed to resolve executable directory");
+  char running_dir[PATH_MAX];
+  if (!get_running_dir(running_dir, sizeof(running_dir))) {
+    logger_warn("socket_init: failed to resolve executable directory");
     sock->enabled = false;
     return;
   }
 
-  int n = snprintf(sock->socket_path, sizeof(sock->socket_path), "%s/rmfc_socket", exe_dir);
+  int n = snprintf(sock->socket_path, sizeof(sock->socket_path),
+                   "%s/rmfc_socket", running_dir);
   if (n < 0 || (size_t)n >= sizeof(sock->socket_path)) {
-    logger_write(rt, 0, "socket_init: socket path too long for buffer");
+    logger_warn("socket_init: socket path too long for buffer");
     sock->enabled = false;
     return;
   }
 
   sock->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sock->server_fd < 0) {
-    perror("socket_init: socket()");
+    logger_errno(LOGGER_WARN, "socket_init: failed to create socket");
     sock->enabled = false;
     return;
   }
@@ -56,26 +60,26 @@ void socket_init(Runtime *rt) {
   sock->address.sun_family = AF_UNIX;
 
   if (strlen(sock->socket_path) >= sizeof(sock->address.sun_path)) {
-    logger_write(rt, 0, "socket_init: path exceeds sun_path limit (108 bytes)");
+    logger_warn("socket_init: path exceeds sun_path limit (108 bytes)");
     close(sock->server_fd);
     sock->enabled = false;
     return;
   }
-  strncpy(sock->address.sun_path, sock->socket_path, sizeof(sock->address.sun_path) - 1);
+  strncpy(sock->address.sun_path, sock->socket_path,
+          sizeof(sock->address.sun_path) - 1);
 
   unlink(sock->address.sun_path); // clear stale socket file from a previous run
   sock->addrlen = sizeof(sock->address);
 
-  if (bind(sock->server_fd, (struct sockaddr *)&sock->address, sock->addrlen) < 0) {
-    perror("socket_init: bind()");
-    logger_write(rt, 0, "Failed to bind() socket");
+  if (bind(sock->server_fd, (struct sockaddr *)&sock->address, sock->addrlen) <
+      0) {
+    logger_errno(LOGGER_WARN, "Failed to bind socket");
     close(sock->server_fd);
     sock->enabled = false;
     return;
   }
   if (listen(sock->server_fd, 1) < 0) {
-    perror("socket_init: listen()");
-    logger_write(rt, 0, "Failed start socket listener");
+    logger_errno(LOGGER_WARN, "Failed to start socket listener");
     close(sock->server_fd);
     sock->enabled = false;
     return;
@@ -84,7 +88,7 @@ void socket_init(Runtime *rt) {
   sock->enabled = true;
   int flags = fcntl(sock->server_fd, F_GETFL, 0);
   fcntl(sock->server_fd, F_SETFL, flags | O_NONBLOCK);
-  logger_write(rt, 2, "Initialized Socket");
+  logger_info("Initialized Socket");
 }
 
 void socket_cleanup(Runtime *rt) {
@@ -105,16 +109,15 @@ void socket_accept(Runtime *rt) {
 
   if (fd < 0) {
     if (errno != EAGAIN && errno != EWOULDBLOCK)
-      logger_write(rt, 1, "accept() failed");
+      logger_errno(LOGGER_WARN, "Failed to accept client");
     return;
   }
 
   sock->client_fd = fd;
-
   int flags = fcntl(fd, F_GETFL, 0);
   fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 
-  logger_write(rt, 2, "Client connected");
+  logger_info("Client connected");
 }
 // handle the send function to auto alocate the buffer and its byte size
 void socket_send(Runtime *rt, const char *message) {
@@ -124,7 +127,7 @@ void socket_send(Runtime *rt, const char *message) {
       malloc(message_length +
              2); // allocate space for the message, newline, and null terminator
   if (message_with_newline == NULL) {
-    logger_write(rt, 1, "Failed to allocate memory for message");
+    logger_warn("Failed to allocate memory for message");
     free(tmp_message);
     return;
   }
@@ -134,10 +137,9 @@ void socket_send(Runtime *rt, const char *message) {
   Socket *sock = &rt->socket;
   message_length = strlen(message_with_newline);
   if (send(sock->client_fd, message_with_newline, message_length, 0) == -1) {
-    logger_write(rt, 1, "Failed to send message: %s error: %s", message,
-                 strerror(errno));
+    logger_errno(LOGGER_WARN, "Failed to send message: %s", message);
   } else {
-    logger_write(rt, 2, "Message sent successfully: %s", message);
+    logger_errno(LOGGER_INFO, "Message sent successfully: %s", message);
   }
 }
 
@@ -149,18 +151,15 @@ void socket_receive(Runtime *rt) {
   ssize_t n = recv(sock->client_fd, buffer, sizeof(buffer) - 1, 0);
 
   if (n < 0) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK)
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      logger_errno(LOGGER_TRACE, "No data yet");
       return; // no data yet, not a disconnect
-
-    close(sock->client_fd);
-    sock->client_fd = -1;
-    logger_write(rt, 2, "Client disconnected (error)");
-    return;
+    }
   }
   if (n == 0) {
     close(sock->client_fd);
     sock->client_fd = -1;
-    logger_write(rt, 2, "Client disconnected");
+    logger_info("Client disconnected");
     return;
   }
 
