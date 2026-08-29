@@ -8,4 +8,14 @@ The daemon is designed to run as part of a Magisk module on rooted Android devic
 
 Work in progress.
 
+## Build
+Presets:<br>
+ - "linux"        - Linux Release <br>
+ - "aarch64-musl" - ARM64 musl Release <br>
+ - "aarch64"      - Android ARM64 Release <br>
+  
+`cmake --preset <preset-name>`<br>
 
+`cmake --build --preset <preset-name>`
+
+Or just use the workflow builds
