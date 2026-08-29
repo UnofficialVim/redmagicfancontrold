@@ -1,7 +1,0 @@
-[28-08-2026 01:42:39] INFO Logger initialized
-[28-08-2026 01:42:39] INFO Found fan device path
-[28-08-2026 01:42:39] INFO Initialized Fan Control
-[28-08-2026 01:42:39] INFO Initialized Socket
-[28-08-2026 01:42:39] INFO Initialized Temperature Monitoring
-[28-08-2026 01:42:39] INFO Initialized Engine
-[28-08-2026 01:42:39] INFO Starting Event Loop...
