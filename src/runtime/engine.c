@@ -50,6 +50,7 @@ void engine_run(Runtime *rt) {
       if (errno == EINTR)
         logger_errno(LOGGER_INFO, 0, "Poll() interrupted by signal");
       continue; // interrupted by signal, just re-check rt->running
+
       logger_fatal("Poll() failed");
       break;
     }
@@ -72,15 +73,15 @@ void engine_run(Runtime *rt) {
       // find where the current temperature falls in the fan curve and set the
       // fan speed accordingly
       if (rt->config.active) {
-        FanCurve *curve = &rt->config.active->fan_curve;
+        Profile *loaded_profile = rt->config.active;
         int target_speed = 0;
-        for (size_t i = 0; i < curve->step_count; i++) {
-          if (rt->temperature.cpu_temp >= curve->steps[i].temp_c) {
+        for (size_t i = 0; i < loaded_profile->steps_count; i++) {
+          if (rt->temperature.cpu_temp >= loaded_profile->steps[i].temp_c) {
             logger_debug("Temperature %d >= step %zu temp %d, setting target "
                          "speed to %d",
-                         rt->temperature.cpu_temp, i, curve->steps[i].temp_c,
-                         curve->steps[i].fan_pct);
-            target_speed = curve->steps[i].fan_pct;
+                         rt->temperature.cpu_temp, i, loaded_profile->steps[i].temp_c,
+                         loaded_profile->steps[i].fan_lvl);
+            target_speed = loaded_profile->steps[i].fan_lvl;
           } else {
             break; // temperature is below this step, so stop checking
           }

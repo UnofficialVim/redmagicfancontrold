@@ -25,7 +25,6 @@ enum {
   LOGGER_WARN,
   LOGGER_ERROR,
   LOGGER_FATAL
-
 };
 
 typedef void (*logger_log_fn)(LoggerEvent *ev);

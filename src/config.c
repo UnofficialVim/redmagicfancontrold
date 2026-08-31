@@ -18,37 +18,21 @@ This works just enough for the program to continue
 static Config fallback_config = {
     .version = 1,
     .calls_silence_fan = true,
+    //.log_path = "/var/log/fancontrol.log",
     .active_profile = "default",
-    .profile_count = 1,
+    .fan_device_path = "/sys/kernel/fan",
+    .thermal_path = "/sys/class/thermal",
+    //.socket_path = "/data/tmp/rmfc_socket",
     .profiles = {{.name = "default",
-                  .fan_curve = {.step_count = 5,
-                                .steps = {{.temp_c = 40000, .fan_pct = 1},
-                                          {.temp_c = 45000, .fan_pct = 2},
-                                          {.temp_c = 50000, .fan_pct = 3},
-                                          {.temp_c = 60000, .fan_pct = 4},
-                                          {.temp_c = 70000, .fan_pct = 5}}}}},
-    .active = &fallback_config
-                   .profiles[0], // points to the first profile in profiles[]
-    .log_file = "rmfc.log",
-    .current_log_level = LOGGER_TRACE};
+                  .steps = {{.temp_c = 40000, .fan_lvl = 1},
+                            {.temp_c = 45000, .fan_lvl = 2},
+                            {.temp_c = 50000, .fan_lvl = 3},
+                            {.temp_c = 60000, .fan_lvl = 4},
+                            {.temp_c = 70000, .fan_lvl = 5}}}},
+    .active = &fallback_config.profiles[0]};
 
-static int parse_log_level(const char *s) {
-  if (!s)
-    return LOGGER_INFO;
-  if (strcasecmp(s, "error") == 0)
-    return LOGGER_ERROR;
-  if (strcasecmp(s, "warn") == 0)
-    return LOGGER_WARN;
-  if (strcasecmp(s, "info") == 0)
-    return LOGGER_INFO;
-  if (strcasecmp(s, "debug") == 0)
-    return LOGGER_DEBUG;
-  fprintf(stderr, "Unknown log_level '%s', defaulting to info\n", s);
-  return LOGGER_INFO;
-}
+static void parse_fan_curve(cJSON *curve_json, Profile *profile) {
 
-static void parse_fan_curve(cJSON *curve_json, FanCurve *curve) {
-  curve->step_count = 0;
   if (!cJSON_IsArray(curve_json)) {
     logger_error("curve_json is not an array");
     return;
@@ -56,17 +40,17 @@ static void parse_fan_curve(cJSON *curve_json, FanCurve *curve) {
 
   cJSON *step = NULL;
   cJSON_ArrayForEach(step, curve_json) {
-    if (curve->step_count >= MAX_FAN_STEPS) {
+    if (profile->steps_count >= MAX_FAN_STEPS) {
       break;
     }
     cJSON *temp = cJSON_GetObjectItemCaseSensitive(step, "temp_c");
-    cJSON *pct = cJSON_GetObjectItemCaseSensitive(step, "fan_pct");
-    if (!cJSON_IsNumber(temp) || !cJSON_IsNumber(pct))
+    cJSON *lvl = cJSON_GetObjectItemCaseSensitive(step, "fan_lvl");
+    if (!cJSON_IsNumber(temp) || !cJSON_IsNumber(lvl))
       continue;
 
-    FanCurveStep *dst = &curve->steps[curve->step_count++];
+    Step *dst = &profile->steps[profile->steps_count++];
     dst->temp_c = temp->valueint;
-    dst->fan_pct = pct->valueint;
+    dst->fan_lvl = lvl->valueint;
   }
 }
 
@@ -81,19 +65,20 @@ static bool parse_profile(cJSON *profile_json, Profile *profile) {
   profile->name[MAX_PROFILE_NAME - 1] = '\0';
 
   parse_fan_curve(cJSON_GetObjectItemCaseSensitive(profile_json, "fan_curve"),
-                  &profile->fan_curve);
+                  profile);
   return true;
 }
 
 void config_init(Runtime *rt) {
   memset(&rt->config, 0, sizeof(Config));
-  rt->config.current_log_level = LOGGER_TRACE; // default to debug until config is loaded
+  rt->config.log_level =
+      LOGGER_TRACE; // default to debug until config is loaded
 
   FILE *fp = fopen("build/config.json", "r");
   if (fp == NULL || ferror(fp)) {
     logger_errno(LOGGER_ERROR, "Failed to open config file, using fallback");
     rt->config = fallback_config;
-    logger_set_level(rt->config.current_log_level);
+    logger_set_level(rt->config.log_level);
     return;
   }
 
@@ -103,7 +88,9 @@ void config_init(Runtime *rt) {
 
   char *buffer = malloc(file_size + 1);
   if (!buffer) {
-    logger_errno(LOGGER_ERROR, "Memory allocation failed for config buffer, using fallback config");
+    logger_errno(
+        LOGGER_ERROR,
+        "Memory allocation failed for config buffer, using fallback config");
     rt->config = fallback_config;
     fclose(fp);
     return;
@@ -144,14 +131,14 @@ void config_init(Runtime *rt) {
 
     } else if (strcmp(item->string, "log_file") == 0) {
       if (cJSON_IsString(item) && item->valuestring) {
-        free(rt->config.log_file);
-        rt->config.log_file = strdup(item->valuestring);
+        free(rt->config.log_path);
+        rt->config.log_path = strdup(item->valuestring);
       }
 
     } else if (strcmp(item->string, "log_level") == 0) {
-      if (cJSON_IsString(item))
-        rt->config.current_log_level = parse_log_level(item->valuestring);
-
+      if (cJSON_IsString(item)) {
+        // broken
+      };
     } else if (strcmp(item->string, "profiles") == 0) {
       if (!cJSON_IsArray(item)) {
         fprintf(stderr, "'profiles' is not an array\n");
@@ -159,35 +146,37 @@ void config_init(Runtime *rt) {
       }
       cJSON *pj = NULL;
       cJSON_ArrayForEach(pj, item) {
-        if (rt->config.profile_count >= MAX_PROFILES) {
+        if (rt->config.loaded_profiles_count >= MAX_PROFILES) {
           fprintf(stderr, "profiles exceeds MAX_PROFILES, truncating\n");
           break;
         }
-        if (parse_profile(pj, &rt->config.profiles[rt->config.profile_count]))
-          rt->config.profile_count++;
+        if (parse_profile(pj, &rt->config.profiles[rt->config.loaded_profiles_count])) {
+        } 
+        else {
+          logger_errno(LOGGER_WARN, "Unknown config key: %s\n", item->string);
+        }
       }
+      cJSON_Delete(json);
 
-    } else {
-      logger_errno(LOGGER_WARN, "Unknown config key: %s\n", item->string);
-    }
-  }
-  cJSON_Delete(json);
-
-  // resolve active pointer now that profiles[] is fully populated
-  rt->config.active = NULL;
-  for (size_t i = 0; i < rt->config.profile_count; i++) {
-    if (strcmp(rt->config.profiles[i].name, rt->config.active_profile) == 0) {
-      rt->config.active = &rt->config.profiles[i];
-      break;
-    }
-  }
-  if (!rt->config.active && rt->config.profile_count > 0) {
-    logger_errno(LOGGER_INFO,
+      // resolve active pointer now that profiles[] is fully populated
+      rt->config.active = NULL;
+      for (size_t i = 0; i < rt->config.loaded_profiles_count; i++) {
+        if (strcmp(rt->config.profiles[i].name, rt->config.active_profile) ==
+            0) {
+          rt->config.active = &rt->config.profiles[i];
+          break;
+        }
+      }
+      if (!rt->config.active && rt->config.loaded_profiles_count > 0) {
+        logger_errno(
+            LOGGER_INFO,
             "active_profile '%s' not found, defaulting to profiles[0]\n",
             rt->config.active_profile);
-    rt->config.active = &rt->config.profiles[0];
+        rt->config.active = &rt->config.profiles[0];
+      }
+      logger_set_level(LOGGER_TRACE);
+    }
   }
-  logger_set_level(rt->config.current_log_level);
 }
 
 void config_save(Runtime *rt) {

@@ -10,50 +10,31 @@ struct Runtime;
 #define MAX_PROFILE_NAME 32
 #define MAX_PROFILES 8
 
-typedef struct
-{
+typedef struct {
     int temp_c;
-    int fan_pct;
-} FanCurveStep;
+    int fan_lvl;
+} Step;
 
-typedef struct
-{
-    FanCurveStep steps[MAX_FAN_STEPS];
-    size_t step_count;
-} FanCurve;
-
-typedef struct
-{
+typedef struct {
+    Step steps[MAX_FAN_STEPS];
     char name[MAX_PROFILE_NAME];
-    FanCurve fan_curve;
+    int steps_count;
 } Profile;
 
-
-typedef enum {
-        LOG_ERROR = 0,
-        LOG_WARN,
-        LOG_INFO,
-        LOG_DEBUG,
-    LOG_MAX   
-} LogLevel;
-
-static const char *log_level_str[] = {
-    "ERROR",
-    "WARN",
-    "INFO",
-    "DEBUG"
-};
 
 typedef struct Config
 {
     int version;
     bool calls_silence_fan;
-    char active_profile[MAX_PROFILE_NAME];
-    size_t profile_count;
-    Profile profiles[MAX_PROFILES];
-    Profile *active;
-    char *log_file;
-    LogLevel current_log_level; 
+    char *log_path;
+    char *active_profile;
+    char *fan_device_path;
+    char *thermal_path;
+    char *socket_path;
+    int log_level;
+    Profile profiles[MAX_PROFILES];//are we holding all 8 profiles in memory at once?
+    Profile *active; //maybe change to active_profile for clarity
+    int loaded_profiles_count;
 } Config;
 
 void config_init(struct Runtime *rt);

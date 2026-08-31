@@ -1,20 +1,22 @@
 {
     "version": 1,
     "calls_silence_fan": true,
-    "log_file": "../config/log",
-    "current_log_level": "LOGGER_TRACE",
+    "log_path": "../config/log",
+    "log_level": "LOGGER_TRACE",
     "active_profile": "default",
     "fan_device_path": "/sys/kernel/fan",
+    "thermal_path":"/sys/class/thermal", 
+    "socket_path": "../rmfc_socket",
     "profiles": [
         {
             "name": "default",
             "fan_curve": {
                 "steps": [
-                    { "temp_c": 40, "fan_pct": 0 },
-                    { "temp_c": 50, "fan_pct": 30 },
-                    { "temp_c": 60, "fan_pct": 55 },
-                    { "temp_c": 70, "fan_pct": 80 },
-                    { "temp_c": 80, "fan_pct": 100 }
+                    { "temp_c": 40, "fan_lvl": 0 },
+                    { "temp_c": 50, "fan_lvl": 2 },
+                    { "temp_c": 60, "fan_lvl": 3 },
+                    { "temp_c": 70, "fan_lvl": 4 },
+                    { "temp_c": 80, "fan_lvl": 5 }
                 ]
             }
         },
@@ -22,10 +24,10 @@
             "name": "gaming",
             "fan_curve": {
                 "steps": [
-                    { "temp_c": 35, "fan_pct": 20 },
-                    { "temp_c": 45, "fan_pct": 45 },
-                    { "temp_c": 55, "fan_pct": 70 },
-                    { "temp_c": 65, "fan_pct": 100 }
+                    { "temp_c": 35, "fan_lvl": 1 },
+                    { "temp_c": 45, "fan_lvl": 2 },
+                    { "temp_c": 55, "fan_lvl": 4 },
+                    { "temp_c": 65, "fan_lvl": 5 }
                 ]
             }
         }
