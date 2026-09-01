@@ -21,7 +21,7 @@
 
             "targetCreateCommands": [
                 "platform select remote-android",
-                "platform connect connect://127.0.0.1:5039",
+                "platform connect connect://:5039",
                 "platform settings -w /data/local/tmp",
                 "target create ${workspaceFolder}/build_aarch64/redmagicfancontrold"
             ],

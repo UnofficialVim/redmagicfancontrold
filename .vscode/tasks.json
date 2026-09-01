@@ -58,10 +58,17 @@
             "problemMatcher": []
         },
         {
+            "label": "stop lldb-server",
+            "type": "shell",
+            "command": "adb shell su -c 'pkill -x lldb-server || true'",
+            "dependsOn": "forward lldb port",
+            "problemMatcher": []
+        },
+        {
             "label": "start lldb-server",
             "type": "shell",
-            "command": "adb shell su -c './data/local/tmp/lldb-server platform --server --listen *:5039 >/data/local/tmp/lldb-server.log 2>&1 &'",
-            "dependsOn": "forward lldb port",
+            "command": "adb shell su -c '/data/local/tmp/lldb-server platform --listen '*:5039' --server >/data/local/tmp/lldb-server.log 2>&1 &'",
+            "dependsOn": "stop lldb-server",
             "problemMatcher": []
         }
     ]
