@@ -27,5 +27,6 @@ typedef struct Runtime
 
 void runtime_init(Runtime *rt);
 void runtime_cleanup(Runtime *rt);
+char* get_running_dir();
 
 #endif // RUNTIME_H

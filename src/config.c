@@ -74,7 +74,7 @@ void config_init(Runtime *rt) {
   rt->config.log_level =
       LOGGER_TRACE; // default to debug until config is loaded
 
-  FILE *fp = fopen("build/config.json", "r");
+  FILE *fp = fopen("/data/local/tmp/config.json", "r");
   if (fp == NULL || ferror(fp)) {
     logger_errno(LOGGER_ERROR, "Failed to open config file, using fallback");
     rt->config = fallback_config;
@@ -113,6 +113,7 @@ void config_init(Runtime *rt) {
   cJSON_ArrayForEach(item, json) {
     if (!item->string)
       continue;
+    logger_debug("Parsing config key: %s", item->string);
 
     if (strcmp(item->string, "version") == 0) {
       if (cJSON_IsNumber(item))
@@ -124,9 +125,9 @@ void config_init(Runtime *rt) {
 
     } else if (strcmp(item->string, "active_profile") == 0) {
       if (cJSON_IsString(item) && item->valuestring) {
-        strncpy(rt->config.active_profile, item->valuestring,
-                MAX_PROFILE_NAME - 1);
-        rt->config.active_profile[MAX_PROFILE_NAME - 1] = '\0';
+        //throws SIGSEGV address not mapped. most likey the address is null
+        //strncpy(rt->config.active_profile, item->valuestring,MAX_PROFILE_NAME - 1);
+        //rt->config.active_profile[MAX_PROFILE_NAME - 1] = '\0';
       }
 
     } else if (strcmp(item->string, "log_file") == 0) {

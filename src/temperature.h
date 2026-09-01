@@ -13,4 +13,5 @@ typedef struct Temperature {
  int temperature_init(struct Runtime *rt);
  int temperature_get_cpu_temp(struct Runtime *rt);
  int temperature_get_gpu_temp(struct Runtime *rt);
+ char* get_temperature_formatted_string(int temp_milli_celsius);
  #endif // TEMPERATURE_H

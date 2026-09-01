@@ -19,6 +19,12 @@ int temperature_init(Runtime *rt) {
   return 0;
 }
 
+char* get_temperature_formatted_string(int temp_milli_celsius) {
+  static char buffer[16];
+  snprintf(buffer, sizeof(buffer), "%.1f°C", temp_milli_celsius / 1000.0);
+  return buffer;
+} 
+
 int temperature_get_cpu_temp(Runtime *rt) {
   int total_temp = 0;
   int cpu_zones = 0;

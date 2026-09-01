@@ -69,6 +69,7 @@ void engine_run(Runtime *rt) {
       // update temperature readings
       rt->temperature.cpu_temp = temperature_get_cpu_temp(rt);
       logger_debug("Current CPU Temperature: %d", rt->temperature.cpu_temp);
+      logger_info("Current CPU Temperature: %s", get_temperature_formatted_string(rt->temperature.cpu_temp));
 
       // find where the current temperature falls in the fan curve and set the
       // fan speed accordingly

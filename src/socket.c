@@ -10,43 +10,16 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-static bool get_running_dir(char *out, size_t out_size) {
-  char running_path[PATH_MAX];
-  ssize_t len =
-      readlink("/proc/self/exe", running_path, sizeof(running_path) - 1);
-  if (len < 0) {
-    logger_errno(LOGGER_WARN, "Failed to read running path");
-    return false;
-  }
-  running_path[len] = '\0';
-
-  char *slash = strrchr(running_path, '/');
-  if (!slash)
-    return false;
-  *slash = '\0';
-
-  if (strlen(running_path) >= out_size)
-    return false;
-  memcpy(out, running_path, strlen(running_path) + 1);
-  return true;
-}
-
 void socket_init(Runtime *rt) {
   Socket *sock = &rt->socket;
-
-  char running_dir[PATH_MAX];
-  if (!get_running_dir(running_dir, sizeof(running_dir))) {
-    logger_warn("socket_init: failed to resolve executable directory");
-    sock->enabled = false;
-    return;
-  }
+  char *running_dir = get_running_dir();
 
   int n = snprintf(sock->socket_path, sizeof(sock->socket_path),
-                   "%s/rmfc_socket", running_dir);
+                  "%s/rmfc_socket", running_dir);
   if (n < 0 || (size_t)n >= sizeof(sock->socket_path)) {
-    logger_warn("socket_init: socket path too long for buffer");
-    sock->enabled = false;
-    return;
+   logger_warn("socket_init: socket path too long for buffer");
+   sock->enabled = false;
+   return;
   }
 
   sock->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);

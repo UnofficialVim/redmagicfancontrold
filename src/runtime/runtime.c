@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <signal.h>
+#include <unistd.h>
 
 
 static void handle_shutdown_signal(int sig) {
@@ -34,4 +35,15 @@ void runtime_cleanup(Runtime *rt) {
   socket_cleanup(rt);
   logger_info("Cleaning up Runtime");
   rt->running = false;
+}
+
+char* get_running_dir() {
+  static char cwd[1024];
+  if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    logger_debug("Current working directory: %s", cwd);
+    return cwd;
+  } else {
+    logger_errno(LOGGER_ERROR, "Failed to get current working directory");
+    return NULL;
+  }
 }
