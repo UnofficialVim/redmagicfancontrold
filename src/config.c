@@ -8,17 +8,23 @@
 #include <string.h>
 #include <strings.h>
 
-/*
-TODO:
-    Actually load all the configs
-This works just enough for the program to continue
-*/
-
+static char log_level_from_string(const char *s) {
+  if (!s)
+    return LOGGER_TRACE;
+  if (strcmp(s, "LOGGER_TRACE") == 0) return LOGGER_TRACE;
+  if (strcmp(s, "LOGGER_DEBUG") == 0) return LOGGER_DEBUG;
+  if (strcmp(s, "LOGGER_INFO")  == 0) return LOGGER_INFO;
+  if (strcmp(s, "LOGGER_WARN")  == 0) return LOGGER_WARN;
+  if (strcmp(s, "LOGGER_ERROR") == 0) return LOGGER_ERROR;
+  logger_warn("Unknown log_level '%s' in config, keeping default", s);
+  return LOGGER_TRACE;
+}
 // fallback config in case the config file is missing or invalid
 static Config fallback_config = {
     .version = 1,
     .calls_silence_fan = true,
     //.log_path = "/var/log/fancontrol.log",
+    .log_level = LOGGER_TRACE,
     .active_profile = "default",
     .fan_device_path = "/sys/kernel/fan",
     .thermal_path = "/sys/class/thermal",
@@ -71,10 +77,10 @@ static bool parse_profile(cJSON *profile_json, Profile *profile) {
 
 void config_init(Runtime *rt) {
   memset(&rt->config, 0, sizeof(Config));
-  rt->config.log_level =
-      LOGGER_TRACE; // default to debug until config is loaded
+  rt->config.log_level = LOGGER_TRACE; // default to debug until config is loaded
 
-  FILE *fp = fopen("/data/local/tmp/config.json", "r");
+  char *running_dir = get_running_dir();
+  FILE *fp = fopen(strcat(running_dir, "/config.json"), "r");
   if (fp == NULL || ferror(fp)) {
     logger_errno(LOGGER_ERROR, "Failed to open config file, using fallback");
     rt->config = fallback_config;
@@ -116,68 +122,113 @@ void config_init(Runtime *rt) {
     logger_debug("Parsing config key: %s", item->string);
 
     if (strcmp(item->string, "version") == 0) {
-      if (cJSON_IsNumber(item))
+      if (cJSON_IsNumber(item)){
         rt->config.version = item->valueint;
+        logger_trace("Config version: %d", rt->config.version);
+      }
 
     } else if (strcmp(item->string, "calls_silence_fan") == 0) {
-      if (cJSON_IsBool(item))
+      if (cJSON_IsBool(item)){
         rt->config.calls_silence_fan = cJSON_IsTrue(item);
+        logger_trace("Config calls_silence_fan: %d", rt->config.calls_silence_fan);
+      }
 
     } else if (strcmp(item->string, "active_profile") == 0) {
       if (cJSON_IsString(item) && item->valuestring) {
-        //throws SIGSEGV address not mapped. most likey the address is null
-        //strncpy(rt->config.active_profile, item->valuestring,MAX_PROFILE_NAME - 1);
-        //rt->config.active_profile[MAX_PROFILE_NAME - 1] = '\0';
+        free(rt->config.active_profile); // no op if still NULL
+        rt->config.active_profile = strdup(item->valuestring);
+        logger_trace("Config active_profile: %s", rt->config.active_profile);
+        if (!rt->config.active_profile)
+          logger_errno(LOGGER_ERROR, "strdup failed for active_profile");
       }
 
-    } else if (strcmp(item->string, "log_file") == 0) {
+    } else if (strcmp(item->string, "log_path") == 0) {
       if (cJSON_IsString(item) && item->valuestring) {
         free(rt->config.log_path);
         rt->config.log_path = strdup(item->valuestring);
+        logger_trace("Config log_path: %s", rt->config.log_path);
       }
-
+ 
     } else if (strcmp(item->string, "log_level") == 0) {
-      if (cJSON_IsString(item)) {
-        // broken
-      };
+      if (cJSON_IsString(item) && item->valuestring){
+        rt->config.log_level = log_level_from_string(item->valuestring);
+        logger_trace("Config log_level: %d", rt->config.log_level);
+      }
+ 
+    } else if (strcmp(item->string, "fan_device_path") == 0) {
+      if (cJSON_IsString(item) && item->valuestring) {
+        free(rt->config.fan_device_path);
+        rt->config.fan_device_path = strdup(item->valuestring);
+        logger_trace("Config fan_device_path: %s", rt->config.fan_device_path);
+      }
+ 
+    } else if (strcmp(item->string, "thermal_path") == 0) {
+      if (cJSON_IsString(item) && item->valuestring) {
+        free(rt->config.thermal_path);
+        rt->config.thermal_path = strdup(item->valuestring);
+        logger_trace("Config thermal_path: %s", rt->config.thermal_path);
+      }
+ 
+    } else if (strcmp(item->string, "socket_path") == 0) {
+      if (cJSON_IsString(item) && item->valuestring) {
+        free(rt->config.socket_path);
+        rt->config.socket_path = strdup(item->valuestring);
+        logger_trace("Config socket_path: %s", rt->config.socket_path);
+      }
+ 
     } else if (strcmp(item->string, "profiles") == 0) {
       if (!cJSON_IsArray(item)) {
-        fprintf(stderr, "'profiles' is not an array\n");
+        logger_warn("'profiles' is not an array");
+        logger_trace("Dump of 'profiles' JSON: %s", cJSON_Print(item));
         continue;
       }
       cJSON *pj = NULL;
       cJSON_ArrayForEach(pj, item) {
         if (rt->config.loaded_profiles_count >= MAX_PROFILES) {
-          fprintf(stderr, "profiles exceeds MAX_PROFILES, truncating\n");
+          logger_warn("profiles exceeds MAX_PROFILES, truncating");
+          logger_trace("Dump of 'profiles' JSON: %s", cJSON_Print(item));
           break;
         }
-        if (parse_profile(pj, &rt->config.profiles[rt->config.loaded_profiles_count])) {
-        } 
-        else {
-          logger_errno(LOGGER_WARN, "Unknown config key: %s\n", item->string);
+        Profile *slot = &rt->config.profiles[rt->config.loaded_profiles_count];
+        if (parse_profile(pj, slot)) {
+          rt->config.loaded_profiles_count++; 
+        } else {
+          logger_warn("Failed to parse profile at index %zu, skipping",
+                      rt->config.loaded_profiles_count);
         }
       }
-      cJSON_Delete(json);
-
-      // resolve active pointer now that profiles[] is fully populated
-      rt->config.active = NULL;
-      for (size_t i = 0; i < rt->config.loaded_profiles_count; i++) {
-        if (strcmp(rt->config.profiles[i].name, rt->config.active_profile) ==
-            0) {
-          rt->config.active = &rt->config.profiles[i];
-          break;
-        }
-      }
-      if (!rt->config.active && rt->config.loaded_profiles_count > 0) {
-        logger_errno(
-            LOGGER_INFO,
-            "active_profile '%s' not found, defaulting to profiles[0]\n",
-            rt->config.active_profile);
-        rt->config.active = &rt->config.profiles[0];
-      }
-      logger_set_level(LOGGER_TRACE);
+ 
+    } else {
+      logger_warn("Unknown config key: %s", item->string);
+      logger_trace("Dump of unknown config key JSON: %s", cJSON_Print(item));
     }
   }
+ 
+  cJSON_Delete(json);
+ 
+  // resolve active pointer now that profiles[] is fully populated,
+  // regardless of what order keys appeared in the JSON.
+  rt->config.active = NULL;
+  if (rt->config.active_profile) {
+    for (size_t i = 0; i < rt->config.loaded_profiles_count; i++) {
+      if (strcmp(rt->config.profiles[i].name, rt->config.active_profile) == 0) {
+        rt->config.active = &rt->config.profiles[i];
+        logger_debug("Active profile set to '%s'", rt->config.active_profile);
+        break;
+      }
+    }
+  }
+  if (!rt->config.active && rt->config.loaded_profiles_count > 0) {
+    logger_errno(LOGGER_INFO,
+                 "active_profile '%s' not found, defaulting to profiles[0]",
+                 rt->config.active_profile ? rt->config.active_profile : "(none)");
+    rt->config.active = &rt->config.profiles[0];
+  }
+ 
+  logger_set_level(rt->config.log_level);
+  logger_trace("logger level set to %d", rt->config.log_level);
+
+  logger_info("Config loaded successfully with %zu profiles", rt->config.loaded_profiles_count);
 }
 
 void config_save(Runtime *rt) {
@@ -185,5 +236,4 @@ void config_save(Runtime *rt) {
 }
 
 void config_load(Runtime *rt) {
-  // rt->config.version = 1;//stub
 }
