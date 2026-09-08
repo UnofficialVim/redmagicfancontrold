@@ -30,6 +30,7 @@ static Config fallback_config = {
     .thermal_path = "/sys/class/thermal",
     //.socket_path = "/data/tmp/rmfc_socket",
     .profiles = {{.name = "default",
+                  .refresh_rate = 5,// default refresh rate in seconds
                   .steps = {{.temp_c = 40000, .fan_lvl = 1},
                             {.temp_c = 45000, .fan_lvl = 2},
                             {.temp_c = 50000, .fan_lvl = 3},
@@ -69,6 +70,15 @@ static bool parse_profile(cJSON *profile_json, Profile *profile) {
 
   strncpy(profile->name, name->valuestring, MAX_PROFILE_NAME - 1);
   profile->name[MAX_PROFILE_NAME - 1] = '\0';
+
+  cJSON *refresh_rate = cJSON_GetObjectItemCaseSensitive(profile_json, "refresh_rate");
+  if (!cJSON_IsNumber(refresh_rate)) {
+    logger_warn("Profile '%s' missing or invalid 'refresh_rate', defaulting to 5 seconds", profile->name);
+    profile->refresh_rate = 5.0f;
+  } else {
+    profile->refresh_rate = (float)refresh_rate->valuedouble;
+    logger_trace("Profile '%s' refresh_rate set to %.2f seconds", profile->name, profile->refresh_rate);
+  }
 
   parse_fan_curve(cJSON_GetObjectItemCaseSensitive(profile_json, "fan_curve"),
                   profile);

@@ -6,10 +6,11 @@
     "active_profile": "default",
     "fan_device_path": "/sys/kernel/fan",
     "thermal_path":"/sys/class/thermal", 
-    "socket_path": "../rmfc_socket",
+    "socket_path": "/rmfc_socket",
     "profiles": [
         {
             "name": "default",
+            "refresh_rate": 5,
             "fan_curve": {
                 "steps": [
                     { "temp_c": 40000, "fan_lvl": 0 },
@@ -22,6 +23,7 @@
         },
         {
             "name": "gaming",
+            "refresh_rate": 2.5,
             "fan_curve": {
                 "steps": [
                     { "temp_c": 35000, "fan_lvl": 1 },

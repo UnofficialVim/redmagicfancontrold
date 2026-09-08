@@ -27,7 +27,7 @@
             ],
 
             "processCreateCommands": [
-                "process launch"
+                "process launch -w /data/local/tmp"
             ],
 
             "preLaunchTask": "start lldb-server"

@@ -13,12 +13,10 @@
 #include "runtime.h"
 #include <stdatomic.h>
 
-const int REFRESH_RATE = 5; // stub for now
-
 void engine_run(Runtime *rt) {
   logger_info("Starting Event Loop...");
 
-  time_t next_fan_check = time(NULL) + REFRESH_RATE;
+  time_t next_fan_check = time(NULL) + rt->config.active->refresh_rate;
 
   // Main event loop
   while (rt->running && !rt->shutdown_requested) {
@@ -96,7 +94,7 @@ void engine_run(Runtime *rt) {
                                            // you gotta open it anyway
         }
       }
-      next_fan_check = now + REFRESH_RATE;
+      next_fan_check = now + rt->config.active->refresh_rate;
     }
   }
 }
