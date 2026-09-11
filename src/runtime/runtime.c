@@ -5,18 +5,18 @@
 #include <signal.h>
 #include <unistd.h>
 
+static Runtime *g_rt = NULL; // Global pointer to the Runtime instance
 
 static void handle_shutdown_signal(int sig) {
   (void)sig;
-    // Set the shutdown_requested flag in the Runtime struct
-    Runtime *rt = (Runtime *)sig; // Cast the signal number to Runtime pointer
-    rt->shutdown_requested = 1;
-    logger_info("Shutdown requested");
+  if (g_rt)
+    g_rt->shutdown_requested = 1;
 }
 
 void runtime_init(Runtime *rt) {
   rt->running = true;
   rt->shutdown_requested = 0;
+  g_rt = rt;
 
   struct sigaction sa = {0};
   sa.sa_handler = handle_shutdown_signal;

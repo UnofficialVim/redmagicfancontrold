@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
     Step steps[MAX_FAN_STEPS];
-    float refresh_rate;
+    double refresh_rate;
     char name[MAX_PROFILE_NAME];
     int steps_count;
 } Profile;

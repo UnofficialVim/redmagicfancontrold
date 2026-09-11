@@ -76,7 +76,7 @@ static bool parse_profile(cJSON *profile_json, Profile *profile) {
     logger_warn("Profile '%s' missing or invalid 'refresh_rate', defaulting to 5 seconds", profile->name);
     profile->refresh_rate = 5.0f;
   } else {
-    profile->refresh_rate = (float)refresh_rate->valuedouble;
+    profile->refresh_rate = refresh_rate->valuedouble;
     logger_trace("Profile '%s' refresh_rate set to %.2f seconds", profile->name, profile->refresh_rate);
   }
 

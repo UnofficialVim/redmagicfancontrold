@@ -15,11 +15,11 @@ void socket_init(Runtime *rt) {
   char *running_dir = get_running_dir();
 
   int n = snprintf(sock->socket_path, sizeof(sock->socket_path),
-                  "%s/rmfc_socket", running_dir);
+                   "%s/rmfc_socket", running_dir);
   if (n < 0 || (size_t)n >= sizeof(sock->socket_path)) {
-   logger_warn("socket_init: socket path too long for buffer");
-   sock->enabled = false;
-   return;
+    logger_warn("socket_init: socket path too long for buffer");
+    sock->enabled = false;
+    return;
   }
 
   sock->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -128,6 +128,10 @@ void socket_receive(Runtime *rt) {
       logger_errno(LOGGER_TRACE, "No data yet");
       return; // no data yet, not a disconnect
     }
+    logger_errno(LOGGER_WARN, "recv() failed, closing client");
+    close(sock->client_fd);
+    sock->client_fd = -1;
+    return;
   }
   if (n == 0) {
     close(sock->client_fd);
