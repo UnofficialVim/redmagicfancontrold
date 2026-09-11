@@ -6,7 +6,13 @@ The daemon is designed to run on a rooted Android device. It maintains fan state
 
 ## Status
 
-Work in progress.
+- [x] Fan control based on CPU temperature
+- [x] Custom config (fan steps, refresh rate, per-profile settings)
+- [x] Unix socket IPC transport (accept/receive/send over a domain socket)
+- [x] Structured logging (console + file sinks, per-level filtering)
+- [x] Cross-compiled CI builds (Linux, aarch64-musl static, Android aarch64)
+
+More functionality still in progress
 
 ## Build
 Presets:<br>
