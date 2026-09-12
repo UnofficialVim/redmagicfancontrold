@@ -66,7 +66,7 @@ void socket_init(Runtime *rt) {
 
 void socket_cleanup(Runtime *rt) {
   Socket *sock = &rt->socket;
-
+  logger_debug("Cleaning up socket: %s", sock->socket_path);
   if (sock->client_fd >= 0)
     close(sock->client_fd);
   if (sock->server_fd >= 0)
@@ -96,9 +96,7 @@ void socket_accept(Runtime *rt) {
 void socket_send(Runtime *rt, const char *message) {
   char *tmp_message = strdup(message);
   size_t message_length = strlen(tmp_message);
-  char *message_with_newline =
-      malloc(message_length +
-             2); // allocate space for the message, newline, and null terminator
+  char *message_with_newline = malloc(message_length + 2);
   if (message_with_newline == NULL) {
     logger_warn("Failed to allocate memory for message");
     free(tmp_message);
@@ -112,7 +110,7 @@ void socket_send(Runtime *rt, const char *message) {
   if (send(sock->client_fd, message_with_newline, message_length, 0) == -1) {
     logger_errno(LOGGER_WARN, "Failed to send message: %s", message);
   } else {
-    logger_errno(LOGGER_INFO, "Message sent successfully: %s", message);
+    logger_info("Message sent successfully: %s", message);
   }
 }
 
@@ -142,29 +140,28 @@ void socket_receive(Runtime *rt) {
 
   buffer[strcspn(buffer, "\n")] = '\0';
 
-  const char *response = "Command received";
-  socket_send(rt, response);
+  logger_debug("Received command: %s", buffer);
 
   if (strncmp(buffer, "getCpuTemp", 10) == 0) {
     char message[12];
     snprintf(message, sizeof(message), "%d", temperature_get_cpu_temp(rt));
+    logger_debug("CPU temperature: %s", message);
     socket_send(rt, message);
-  }
-  else if (strncmp(buffer, "getFanSpeed", 11) == 0) {
+  } else if (strncmp(buffer, "getFanSpeed", 11) == 0) {
     // Get fan speed
     char message[12];
     snprintf(message, sizeof(message), "%d", fan_get_speed(rt));
+    logger_debug("Fan speed: %s", message);
     socket_send(rt, message);
-  } 
-  else if (strncmp(buffer, "getActiveProfile", 16) == 0) {
+  } else if (strncmp(buffer, "getActiveProfile", 16) == 0) {
     // Get active profile
-    if (rt->config.active && rt->config.active->name) {
+    if (rt->config.active != NULL) {
+      logger_trace("Active profile: %s", rt->config.active->name);
       socket_send(rt, rt->config.active->name);
     } else {
       socket_send(rt, "No active profile");
     }
-  } 
-  else if (strncmp(buffer, "setActiveProfile ", 17) == 0) {
+  } else if (strncmp(buffer, "setActiveProfile ", 17) == 0) {
     // Set active profile
     const char *profile_name = buffer + 17;
     bool found = false;
@@ -176,14 +173,20 @@ void socket_receive(Runtime *rt) {
       }
     }
     if (found) {
+      logger_debug("Active profile set to: %s", profile_name);
       socket_send(rt, "Active profile set successfully");
     } else {
+      logger_debug("Profile not found: %s", profile_name);
       socket_send(rt, "Profile not found");
     }
-  } 
-  else {
+  } else if (strncmp(buffer, "reloadConfig", 12) == 0) {
+    config_init(rt);
+    socket_send(rt, "Configuration reloaded");
+    logger_trace("Configuration reloaded via socket command");
+  } else {
     char message[256];
     snprintf(message, sizeof(message), "Unknown command: %s", buffer);
     socket_send(rt, message);
+    logger_debug("Unknown command received: %s", buffer);
   }
 }
