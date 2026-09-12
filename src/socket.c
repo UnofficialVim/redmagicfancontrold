@@ -146,17 +146,42 @@ void socket_receive(Runtime *rt) {
   socket_send(rt, response);
 
   if (strncmp(buffer, "getCpuTemp", 10) == 0) {
-    char *message = "42";
+    char message[12];
+    snprintf(message, sizeof(message), "%d", temperature_get_cpu_temp(rt));
     socket_send(rt, message);
-  } else if (strncmp(buffer, "getFanRPM", 9) == 0) {
-    // Get fan info
-    char *message = "1200";
-    socket_send(rt, message);
-  } else if (strncmp(buffer, "getFanSpeed", 11) == 0) {
+  }
+  else if (strncmp(buffer, "getFanSpeed", 11) == 0) {
     // Get fan speed
-    char *message = "3";
+    char message[12];
+    snprintf(message, sizeof(message), "%d", fan_get_speed(rt));
     socket_send(rt, message);
-  } else {
+  } 
+  else if (strncmp(buffer, "getActiveProfile", 16) == 0) {
+    // Get active profile
+    if (rt->config.active && rt->config.active->name) {
+      socket_send(rt, rt->config.active->name);
+    } else {
+      socket_send(rt, "No active profile");
+    }
+  } 
+  else if (strncmp(buffer, "setActiveProfile ", 17) == 0) {
+    // Set active profile
+    const char *profile_name = buffer + 17;
+    bool found = false;
+    for (size_t i = 0; i < rt->config.loaded_profiles_count; i++) {
+      if (strcmp(rt->config.profiles[i].name, profile_name) == 0) {
+        rt->config.active = &rt->config.profiles[i];
+        found = true;
+        break;
+      }
+    }
+    if (found) {
+      socket_send(rt, "Active profile set successfully");
+    } else {
+      socket_send(rt, "Profile not found");
+    }
+  } 
+  else {
     char message[256];
     snprintf(message, sizeof(message), "Unknown command: %s", buffer);
     socket_send(rt, message);

@@ -1,8 +1,8 @@
 {
     "version": 1,
     "calls_silence_fan": true,
-    "log_path": "../config/log",
     "log_level": "LOGGER_TRACE",
+    "log_path": "rmfc.log",
     "active_profile": "default",
     "fan_device_path": "/sys/kernel/fan",
     "thermal_path":"/sys/class/thermal", 

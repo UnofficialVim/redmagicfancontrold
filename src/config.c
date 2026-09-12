@@ -157,6 +157,16 @@ void config_init(Runtime *rt) {
         free(rt->config.log_path);
         rt->config.log_path = strdup(item->valuestring);
         logger_trace("Config log_path: %s", rt->config.log_path);
+        if (!rt->config.log_path){
+          logger_errno(LOGGER_ERROR, "strdup failed for log_path");
+        }
+        if (logger_add_fp(fopen(rt->config.log_path, "a"), rt->config.log_level) == 0) {
+          logger_debug("Successfully added log file callback");
+          logger_trace("Log file path set to: %s", rt->config.log_path);
+        }
+        else {
+          logger_errno(LOGGER_ERROR, "Failed to add log file callback");
+        }
       }
  
     } else if (strcmp(item->string, "log_level") == 0) {
